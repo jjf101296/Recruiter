@@ -1,27 +1,79 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Wand2, CheckCircle2, ArrowLeft } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
+import { Copy, Wand2, CheckCircle2, ArrowLeft, Upload, FileText, Linkedin } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function BooleanSearchPage() {
   const [jobDescription, setJobDescription] = useState("")
+  const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null)
+  const [highlightedJD, setHighlightedJD] = useState<string>("")
   const [extractedSkills, setExtractedSkills] = useState<string[]>([])
   const [booleanStrings, setBooleanStrings] = useState({
-    basic: "",
-    advanced: "",
-    expert: "",
+    and: "",
+    or: "",
   })
   const [isGenerating, setIsGenerating] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("jd-text")
   const { toast } = useToast()
+
+  const handleJobDescriptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setJobDescriptionFile(e.target.files[0])
+
+      // Read the file content
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const content = event.target.result as string
+          setJobDescription(content)
+        }
+      }
+      reader.readAsText(e.target.files[0])
+
+      toast({
+        title: "Job Description Uploaded",
+        description: `File: ${e.target.files[0].name}`,
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (jobDescription) {
+      highlightJobDescription(jobDescription)
+    }
+  }, [jobDescription])
+
+  const highlightJobDescription = (text: string) => {
+    // Define regex patterns for different elements
+    const yearsPattern = /\b([0-9]+[+]?)\s*(years?|yrs?)\b|\b([0-9]+[+]?)\s*\+\s*(years?|yrs?)\b/gi
+    const certificationPattern =
+      /\b(certification|certified|certificate|AWS|Azure|GCP|PMP|CISSP|CISM|CISA|ITIL|Scrum|CSM|CSPO|CSD|SAFe|CompTIA|MCSE|CCNA|CCNP|CCIE|CEH|OSCP)\b/gi
+    const educationPattern =
+      /\b(Bachelor'?s|Master'?s|PhD|Doctorate|MBA|BSc|MSc|BA|MA|BS|MS|degree|education|university|college)\b/gi
+    const technicalSkillsPattern =
+      /\b(JavaScript|Python|Java|C\+\+|C#|Ruby|PHP|Swift|Kotlin|Go|Rust|SQL|NoSQL|MongoDB|MySQL|PostgreSQL|Oracle|React|Angular|Vue|Node\.js|Express|Django|Flask|Spring|ASP\.NET|HTML|CSS|AWS|Azure|GCP|Docker|Kubernetes|CI\/CD|Git|DevOps|Agile|Scrum|REST|API|JSON|XML|GraphQL)\b/gi
+    const backgroundPattern = /\b(background|experience|industry|sector|field)\b/gi
+
+    // Apply highlighting with HTML spans
+    const highlightedText = text
+      .replace(yearsPattern, '<span class="highlight-years">$&</span>')
+      .replace(certificationPattern, '<span class="highlight-certification">$&</span>')
+      .replace(educationPattern, '<span class="highlight-education">$&</span>')
+      .replace(technicalSkillsPattern, '<span class="highlight-technical">$&</span>')
+      .replace(backgroundPattern, '<span class="highlight-background">$&</span>')
+
+    setHighlightedJD(highlightedText)
+  }
 
   const extractSkillsFromJD = (text: string) => {
     // This is a simplified implementation
@@ -107,32 +159,22 @@ export default function BooleanSearchPage() {
   }
 
   const generateBooleanStrings = (skills: string[]) => {
-    if (skills.length === 0) return { basic: "", advanced: "", expert: "" }
+    if (skills.length === 0) return { and: "", or: "" }
 
-    // Basic Boolean string (OR between all skills)
-    const basic = skills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
+    // OR string (all skills with OR)
+    const orString = skills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
 
-    // Advanced Boolean string (group skills by category with AND/OR)
-    // This is a simplified implementation
-    const technicalSkills = skills.slice(0, Math.ceil(skills.length / 2))
-    const softSkills = skills.slice(Math.ceil(skills.length / 2))
-
-    const technicalString = technicalSkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
-    const softString = softSkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
-    const advanced = `(${technicalString}) AND (${softString})`
-
-    // Expert Boolean string (more complex grouping with proximity operators)
+    // AND string (mixed with AND/OR for better results)
+    // Group skills into categories
     const primarySkills = skills.slice(0, Math.ceil(skills.length / 3))
-    const secondarySkills = skills.slice(Math.ceil(skills.length / 3), Math.ceil((skills.length * 2) / 3))
-    const tertiarySkills = skills.slice(Math.ceil((skills.length * 2) / 3))
+    const secondarySkills = skills.slice(Math.ceil(skills.length / 3))
 
     const primaryString = primarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
     const secondaryString = secondarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
-    const tertiaryString = tertiarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
 
-    const expert = `(${primaryString}) AND ((${secondaryString}) OR (${tertiaryString})) NOT (intern OR internship OR "entry level")`
+    const andString = `(${primaryString}) AND (${secondaryString})`
 
-    return { basic, advanced, expert }
+    return { and: andString, or: orString }
   }
 
   const handleGenerate = () => {
@@ -176,7 +218,9 @@ export default function BooleanSearchPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold">Boolean Search Generator</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Boolean Search Generator
+          </h1>
           <p className="text-slate-600 mt-2">
             Generate powerful Boolean search strings from job descriptions to find the perfect candidates.
           </p>
@@ -185,19 +229,63 @@ export default function BooleanSearchPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Input */}
           <div className="lg:col-span-2">
-            <Card className="mb-6">
+            <Card className="mb-6 border-t-4 border-t-blue-500 shadow-md">
               <CardHeader>
-                <CardTitle className="text-xl">Job Description</CardTitle>
-                <CardDescription>Paste your job description below to generate search strings</CardDescription>
+                <CardTitle className="text-xl flex items-center">
+                  <FileText className="h-5 w-5 text-blue-500 mr-2" />
+                  Job Description
+                </CardTitle>
+                <CardDescription>Paste or upload your job description to generate search strings</CardDescription>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="Paste job description here..."
-                  className="min-h-[300px] font-mono text-sm"
-                  value={jobDescription}
-                  onChange={(e) => setJobDescription(e.target.value)}
-                />
-                <Button className="mt-4 w-full" onClick={handleGenerate} disabled={isGenerating} size="lg">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="jd-text">Paste Text</TabsTrigger>
+                    <TabsTrigger value="jd-upload">Upload File</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="jd-text">
+                    <Textarea
+                      placeholder="Paste job description here..."
+                      className="min-h-[300px] font-mono text-sm"
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="jd-upload">
+                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
+                      <div className="mx-auto flex flex-col items-center justify-center gap-4">
+                        <div className="rounded-full bg-blue-100 p-3">
+                          <Upload className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            {jobDescriptionFile ? jobDescriptionFile.name : "Upload Job Description"}
+                          </p>
+                          <p className="text-xs text-slate-500">PDF, DOCX, or TXT up to 10MB</p>
+                        </div>
+                        <Button variant="outline" className="relative" disabled={isGenerating}>
+                          Choose File
+                          <input
+                            type="file"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            accept=".pdf,.docx,.txt"
+                            onChange={handleJobDescriptionUpload}
+                            disabled={isGenerating}
+                          />
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                <Button
+                  className="mt-4 w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  size="lg"
+                >
                   {isGenerating ? (
                     <>
                       <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -213,10 +301,60 @@ export default function BooleanSearchPage() {
               </CardContent>
             </Card>
 
+            {/* Highlighted Job Description */}
+            {highlightedJD && (
+              <Card className="mb-6 border-t-4 border-t-purple-500 shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-xl">Highlighted Job Description</CardTitle>
+                  <CardDescription>Key elements are highlighted for better analysis</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Color Legend */}
+                  <div className="flex flex-wrap gap-3 mb-4 p-3 bg-slate-50 rounded-md">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                      <span className="text-xs text-slate-700">Years of Experience</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
+                      <span className="text-xs text-slate-700">Certifications</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500 mr-1"></div>
+                      <span className="text-xs text-slate-700">Education</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-purple-500 mr-1"></div>
+                      <span className="text-xs text-slate-700">Technical Skills</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-orange-500 mr-1"></div>
+                      <span className="text-xs text-slate-700">Background</span>
+                    </div>
+                  </div>
+
+                  {/* Highlighted Content */}
+                  <div
+                    className="p-4 bg-white rounded-md border border-slate-200 max-h-[300px] overflow-auto text-sm"
+                    dangerouslySetInnerHTML={{ __html: highlightedJD }}
+                    style={
+                      {
+                        "--highlight-years-color": "#10b981",
+                        "--highlight-certification-color": "#3b82f6",
+                        "--highlight-education-color": "#eab308",
+                        "--highlight-technical-color": "#8b5cf6",
+                        "--highlight-background-color": "#f97316",
+                      } as React.CSSProperties
+                    }
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Results Section */}
             {extractedSkills.length > 0 && (
               <div className="space-y-6">
-                <Card>
+                <Card className="border-t-4 border-t-green-500 shadow-md">
                   <CardHeader>
                     <CardTitle className="text-xl">Extracted Skills</CardTitle>
                     <CardDescription>Key skills identified from the job description</CardDescription>
@@ -224,7 +362,11 @@ export default function BooleanSearchPage() {
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {extractedSkills.map((skill, index) => (
-                        <Badge key={index} variant="secondary" className="text-sm">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-sm bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200"
+                        >
                           {skill}
                         </Badge>
                       ))}
@@ -232,45 +374,45 @@ export default function BooleanSearchPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-t-4 border-t-blue-500 shadow-md">
                   <CardHeader>
                     <CardTitle className="text-xl">Boolean Search Strings</CardTitle>
-                    <CardDescription>Ready-to-use search strings for LinkedIn, job boards, or your ATS</CardDescription>
+                    <CardDescription>
+                      Ready-to-use search strings for Dice, LinkedIn, and other platforms
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Tabs defaultValue="basic" className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-4">
-                        <TabsTrigger value="basic">Basic</TabsTrigger>
-                        <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                        <TabsTrigger value="expert">Expert</TabsTrigger>
+                    <Tabs defaultValue="or" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="or">OR Combination</TabsTrigger>
+                        <TabsTrigger value="and">AND/OR Combination</TabsTrigger>
                       </TabsList>
 
-                      <TabsContent value="basic">
+                      <TabsContent value="or">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-medium">Basic Search String</h4>
-                              <p className="text-sm text-slate-500">Simple OR operator between all skills</p>
+                              <h4 className="font-medium">OR Search String</h4>
+                              <p className="text-sm text-slate-500">Find candidates with any of these skills</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="bg-blue-50">
-                                Beginner
+                                Broader Results
                               </Badge>
-                              <Progress value={33} className="w-20 h-2" />
                             </div>
                           </div>
 
                           <div className="relative">
-                            <div className="bg-slate-50 p-4 rounded-md font-mono text-sm overflow-auto max-h-[200px]">
-                              {booleanStrings.basic}
+                            <div className="bg-slate-50 p-4 rounded-md font-mono text-sm overflow-auto max-h-[200px] border border-slate-200">
+                              {booleanStrings.or}
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
                               className="absolute top-2 right-2"
-                              onClick={() => copyToClipboard(booleanStrings.basic, "Basic")}
+                              onClick={() => copyToClipboard(booleanStrings.or, "OR")}
                             >
-                              {copied === "Basic" ? (
+                              {copied === "OR" ? (
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                               ) : (
                                 <Copy className="h-4 w-4" />
@@ -280,67 +422,31 @@ export default function BooleanSearchPage() {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="advanced">
+                      <TabsContent value="and">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h4 className="font-medium">Advanced Search String</h4>
-                              <p className="text-sm text-slate-500">Grouped skills with AND/OR operators</p>
+                              <h4 className="font-medium">AND/OR Search String</h4>
+                              <p className="text-sm text-slate-500">Find candidates with specific skill combinations</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="bg-green-50">
-                                Intermediate
+                                Targeted Results
                               </Badge>
-                              <Progress value={66} className="w-20 h-2" />
                             </div>
                           </div>
 
                           <div className="relative">
-                            <div className="bg-slate-50 p-4 rounded-md font-mono text-sm overflow-auto max-h-[200px]">
-                              {booleanStrings.advanced}
+                            <div className="bg-slate-50 p-4 rounded-md font-mono text-sm overflow-auto max-h-[200px] border border-slate-200">
+                              {booleanStrings.and}
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
                               className="absolute top-2 right-2"
-                              onClick={() => copyToClipboard(booleanStrings.advanced, "Advanced")}
+                              onClick={() => copyToClipboard(booleanStrings.and, "AND")}
                             >
-                              {copied === "Advanced" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="expert">
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium">Expert Search String</h4>
-                              <p className="text-sm text-slate-500">Complex grouping with NOT operators</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="bg-purple-50">
-                                Expert
-                              </Badge>
-                              <Progress value={100} className="w-20 h-2" />
-                            </div>
-                          </div>
-
-                          <div className="relative">
-                            <div className="bg-slate-50 p-4 rounded-md font-mono text-sm overflow-auto max-h-[200px]">
-                              {booleanStrings.expert}
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="absolute top-2 right-2"
-                              onClick={() => copyToClipboard(booleanStrings.expert, "Expert")}
-                            >
-                              {copied === "Expert" ? (
+                              {copied === "AND" ? (
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                               ) : (
                                 <Copy className="h-4 w-4" />
@@ -358,7 +464,7 @@ export default function BooleanSearchPage() {
 
           {/* Right Column - Info */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
+            <Card className="sticky top-8 border-t-4 border-t-indigo-500 shadow-md">
               <CardHeader>
                 <CardTitle className="text-xl">How It Works</CardTitle>
                 <CardDescription>Generate powerful Boolean search strings in seconds</CardDescription>
@@ -367,7 +473,7 @@ export default function BooleanSearchPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                         1
                       </div>
                       <p className="font-medium">Paste Job Description</p>
@@ -379,42 +485,42 @@ export default function BooleanSearchPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                         2
                       </div>
-                      <p className="font-medium">Extract Key Skills</p>
+                      <p className="font-medium">Analyze Key Elements</p>
                     </div>
                     <p className="text-sm text-slate-600 pl-10">
-                      Our AI analyzes the text to identify key skills and requirements.
+                      Our system highlights important elements like experience, skills, and certifications.
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                         3
                       </div>
-                      <p className="font-medium">Generate Search Strings</p>
+                      <p className="font-medium">Extract Skills</p>
                     </div>
                     <p className="text-sm text-slate-600 pl-10">
-                      Choose from basic, advanced, or expert Boolean search strings.
+                      We automatically identify and extract key skills and requirements.
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                         4
                       </div>
-                      <p className="font-medium">Copy & Search</p>
+                      <p className="font-medium">Generate & Copy</p>
                     </div>
                     <p className="text-sm text-slate-600 pl-10">
-                      Copy the string and paste it into LinkedIn, job boards, or your ATS.
+                      Choose your preferred search string format and copy to your sourcing platform.
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
                   <h4 className="font-medium text-blue-800 mb-2">Pro Tips</h4>
                   <ul className="text-sm text-blue-700 space-y-2">
                     <li className="flex items-start gap-2">
@@ -423,7 +529,7 @@ export default function BooleanSearchPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <div className="mt-1 min-w-[6px] h-1.5 rounded-full bg-blue-400"></div>
-                      <span>Try different string types for different candidate pools</span>
+                      <span>OR strings find more candidates, AND strings find more qualified ones</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <div className="mt-1 min-w-[6px] h-1.5 rounded-full bg-blue-400"></div>
@@ -438,10 +544,20 @@ export default function BooleanSearchPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-200 py-6 mt-16">
+      <footer className="bg-gradient-to-r from-slate-800 to-slate-900 text-slate-200 py-6 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p>© 2025 Recruiter Support Platform.</p>
-          <p className="text-slate-400 mt-2">Helping recruiters find the perfect candidates faster.</p>
+          <p className="text-slate-400 mt-2">Created by John Francis</p>
+          <div className="mt-4 flex justify-center">
+            <a
+              href="https://www.linkedin.com/in/john-francis-eeemba/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </footer>
     </div>

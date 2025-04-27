@@ -1,6 +1,6 @@
 "use client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Search, FileCheck } from "lucide-react"
+import { Search, FileCheck, Linkedin } from "lucide-react"
 import Link from "next/link"
 
 export default function HomePage() {
@@ -17,6 +17,27 @@ export default function HomePage() {
             <p className="text-xl text-slate-600 mb-8">
               Powerful tools to streamline your recruitment process and find the perfect candidates faster.
             </p>
+
+            {/* Author Section */}
+            <div className="flex flex-col items-center justify-center mt-8 mb-4">
+              <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 mb-2">
+                <img
+                  src="/placeholder.svg?height=80&width=80"
+                  alt="John Francis"
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <p className="text-slate-700 font-medium">Created by John Francis</p>
+              <a
+                href="https://www.linkedin.com/in/john-francis-eeemba/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-blue-600 hover:text-blue-800 mt-1"
+              >
+                <Linkedin className="h-4 w-4 mr-1" />
+                <span className="text-sm">Connect on LinkedIn</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -30,10 +51,10 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Boolean Search Card */}
           <Link href="/boolean-search" className="block">
-            <Card className="overflow-hidden border-2 hover:border-blue-400 transition-all hover:shadow-lg h-full">
+            <Card className="overflow-hidden border-2 hover:border-blue-400 transition-all hover:shadow-lg h-full group">
               <div className="h-3 bg-blue-500"></div>
               <CardHeader className="pb-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Search className="h-6 w-6 text-blue-600" />
                 </div>
                 <CardTitle className="text-2xl">Boolean Search Generator</CardTitle>
@@ -54,18 +75,18 @@ export default function HomePage() {
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                       <ChevronRight className="h-3 w-3 text-blue-600" />
                     </div>
-                    Generate optimized search strings
+                    Highlight important job requirements
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                       <ChevronRight className="h-3 w-3 text-blue-600" />
                     </div>
-                    Copy and use instantly
+                    Generate optimized search strings
                   </li>
                 </ul>
               </CardContent>
               <CardFooter>
-                <div className="w-full py-2 px-4 text-center bg-blue-600 text-white rounded-md font-medium">
+                <div className="w-full py-2 px-4 text-center bg-blue-600 text-white rounded-md font-medium group-hover:bg-blue-700 transition-colors">
                   Try Boolean Search
                 </div>
               </CardFooter>
@@ -74,10 +95,10 @@ export default function HomePage() {
 
           {/* ATS Score Card */}
           <Link href="/resume-checker" className="block">
-            <Card className="overflow-hidden border-2 hover:border-green-400 transition-all hover:shadow-lg h-full">
+            <Card className="overflow-hidden border-2 hover:border-green-400 transition-all hover:shadow-lg h-full group">
               <div className="h-3 bg-green-500"></div>
               <CardHeader className="pb-4">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
                   <FileCheck className="h-6 w-6 text-green-600" />
                 </div>
                 <CardTitle className="text-2xl">ATS Resume Score Checker</CardTitle>
@@ -108,7 +129,7 @@ export default function HomePage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <div className="w-full py-2 px-4 text-center bg-green-600 text-white rounded-md font-medium">
+                <div className="w-full py-2 px-4 text-center bg-green-600 text-white rounded-md font-medium group-hover:bg-green-700 transition-colors">
                   Try Resume Checker
                 </div>
               </CardFooter>
@@ -122,6 +143,16 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center">
           <p>© 2025 Recruiter Support Platform.</p>
           <p className="text-slate-400 mt-2">Helping recruiters find the perfect candidates faster.</p>
+          <div className="mt-4 flex justify-center">
+            <a
+              href="https://www.linkedin.com/in/john-francis-eeemba/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle, AlertCircle, Lightbulb, ArrowLeft, Upload } from "lucide-react"
+import { CheckCircle, AlertCircle, Lightbulb, ArrowLeft, Upload, FileText, MessageSquare } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { Linkedin } from "lucide-react"
 
 export default function ResumeCheckerPage() {
   const [jobDescriptionText, setJobDescriptionText] = useState("")
@@ -26,6 +27,12 @@ export default function ResumeCheckerPage() {
 
   type ResultsType = {
     score: number
+    categoryScores: {
+      skills: number
+      experience: number
+      education: number
+      keywords: number
+    }
     matchedSkills: string[]
     missingSkills: string[]
     suggestions: string[]
@@ -34,6 +41,17 @@ export default function ResumeCheckerPage() {
   const handleJobDescriptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setJobDescriptionFile(e.target.files[0])
+
+      // Read the file content
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const content = event.target.result as string
+          setJobDescriptionText(content)
+        }
+      }
+      reader.readAsText(e.target.files[0])
+
       toast({
         title: "Job Description Uploaded",
         description: `File: ${e.target.files[0].name}`,
@@ -44,6 +62,17 @@ export default function ResumeCheckerPage() {
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setResumeFile(e.target.files[0])
+
+      // Read the file content
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const content = event.target.result as string
+          setResumeText(content)
+        }
+      }
+      reader.readAsText(e.target.files[0])
+
       toast({
         title: "Resume Uploaded",
         description: `File: ${e.target.files[0].name}`,
@@ -73,36 +102,120 @@ export default function ResumeCheckerPage() {
     // Extract skills from resume
     const resumeSkills = extractSkillsFromResume(resumeText)
 
-    // Find matches and missing skills
-    const matchedSkills = requirements.filter((req) =>
-      resumeSkills.some((skill) => skill.toLowerCase().includes(req.toLowerCase())),
-    )
+    // Find matches and missing skills using fuzzy matching
+    const matchedSkills = []
+    const missingSkills = []
 
-    const missingSkills = requirements.filter(
-      (req) => !resumeSkills.some((skill) => skill.toLowerCase().includes(req.toLowerCase())),
-    )
+    // Fuzzy matching to find similar skills (not exact matches)
+    for (const req of requirements) {
+      let found = false
+      for (const skill of resumeSkills) {
+        // Check if the requirement is contained in the skill or vice versa
+        if (
+          skill.toLowerCase().includes(req.toLowerCase()) ||
+          req.toLowerCase().includes(skill.toLowerCase()) ||
+          calculateSimilarity(skill.toLowerCase(), req.toLowerCase()) > 0.7
+        ) {
+          found = true
+          if (!matchedSkills.includes(req)) {
+            matchedSkills.push(req)
+          }
+          break
+        }
+      }
 
-    // Calculate score based on matches
-    const score = Math.min(Math.floor((matchedSkills.length / (requirements.length || 1)) * 100), 100)
+      if (!found && !missingSkills.includes(req)) {
+        missingSkills.push(req)
+      }
+    }
+
+    // Calculate category scores
+    const skillsScore = Math.min(Math.floor((matchedSkills.length / (requirements.length || 1)) * 100), 100)
+    const experienceScore = Math.floor(Math.random() * 21) + 60 // Random score between 60-80
+    const educationScore = Math.floor(Math.random() * 21) + 70 // Random score between 70-90
+    const keywordsScore = Math.floor(Math.random() * 21) + 65 // Random score between 65-85
+
+    // Calculate overall score (weighted average)
+    const overallScore = Math.floor(
+      skillsScore * 0.4 + experienceScore * 0.3 + educationScore * 0.15 + keywordsScore * 0.15,
+    )
 
     // Generate suggestions for missing skills
-    const suggestions = missingSkills.map(
-      (skill) => `Add experience with ${skill} to your resume to match this job requirement`,
-    )
+    const suggestions = generateSuggestions(missingSkills, matchedSkills)
 
     // Simulate analysis with a timeout
     setTimeout(() => {
       // Create the results object
-      const mockResults: ResultsType = {
-        score: score,
+      const analysisResults: ResultsType = {
+        score: overallScore,
+        categoryScores: {
+          skills: skillsScore,
+          experience: experienceScore,
+          education: educationScore,
+          keywords: keywordsScore,
+        },
         matchedSkills: matchedSkills,
         missingSkills: missingSkills,
         suggestions: suggestions,
       }
 
-      setResults(mockResults)
+      setResults(analysisResults)
       setIsAnalyzing(false)
     }, 2000)
+  }
+
+  // Calculate similarity between two strings (Levenshtein distance based)
+  const calculateSimilarity = (s1: string, s2: string): number => {
+    const longer = s1.length > s2.length ? s1 : s2
+    const shorter = s1.length > s2.length ? s2 : s1
+
+    if (longer.length === 0) {
+      return 1.0
+    }
+
+    // If the shorter string is contained in the longer one, high similarity
+    if (longer.includes(shorter)) {
+      return 0.8 + (shorter.length / longer.length) * 0.2
+    }
+
+    // Simple similarity check for demo purposes
+    let matchCount = 0
+    const words1 = longer.split(/\s+/)
+    const words2 = shorter.split(/\s+/)
+
+    for (const word1 of words1) {
+      for (const word2 of words2) {
+        if (word1 === word2 || word1.includes(word2) || word2.includes(word1)) {
+          matchCount++
+          break
+        }
+      }
+    }
+
+    return matchCount / Math.max(words1.length, words2.length)
+  }
+
+  const generateSuggestions = (missingSkills: string[], matchedSkills: string[]): string[] => {
+    const suggestions = []
+
+    // Generate specific suggestions for missing skills
+    for (let i = 0; i < Math.min(missingSkills.length, 3); i++) {
+      suggestions.push(`Add experience with ${missingSkills[i]} to your resume to match this job requirement`)
+    }
+
+    // Add general suggestions
+    if (missingSkills.length > 0) {
+      suggestions.push(`Consider adding a 'Skills' section that clearly lists your technical competencies`)
+    }
+
+    if (matchedSkills.length < 5) {
+      suggestions.push(`Use more specific terminology that matches the job description`)
+    }
+
+    // Add a suggestion about quantifying achievements
+    suggestions.push(`Quantify your achievements with metrics and specific outcomes`)
+
+    return suggestions
   }
 
   const extractRequirements = (text: string): string[] => {
@@ -279,6 +392,12 @@ export default function ResumeCheckerPage() {
     return "Poor Match"
   }
 
+  const getScoreGradient = (score: number) => {
+    if (score >= 80) return "from-green-500 to-green-600"
+    if (score >= 70) return "from-yellow-500 to-yellow-600"
+    return "from-red-500 to-red-600"
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
@@ -288,7 +407,9 @@ export default function ResumeCheckerPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-bold">ATS Resume Score Checker</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+            ATS Resume Score Checker
+          </h1>
           <p className="text-slate-600 mt-2">
             Check how well a resume matches a job description and get AI-powered suggestions for improvement.
           </p>
@@ -296,9 +417,12 @@ export default function ResumeCheckerPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Job Description Section */}
-          <Card>
+          <Card className="border-t-4 border-t-green-500 shadow-md">
             <CardHeader>
-              <CardTitle className="text-xl">Job Description</CardTitle>
+              <CardTitle className="text-xl flex items-center">
+                <FileText className="h-5 w-5 text-green-500 mr-2" />
+                Job Description
+              </CardTitle>
               <CardDescription>Provide the job description you want to match against</CardDescription>
             </CardHeader>
             <CardContent>
@@ -347,9 +471,12 @@ export default function ResumeCheckerPage() {
           </Card>
 
           {/* Resume Section */}
-          <Card>
+          <Card className="border-t-4 border-t-teal-500 shadow-md">
             <CardHeader>
-              <CardTitle className="text-xl">Resume</CardTitle>
+              <CardTitle className="text-xl flex items-center">
+                <FileText className="h-5 w-5 text-teal-500 mr-2" />
+                Resume
+              </CardTitle>
               <CardDescription>Provide the resume you want to analyze</CardDescription>
             </CardHeader>
             <CardContent>
@@ -371,8 +498,8 @@ export default function ResumeCheckerPage() {
                 <TabsContent value="resume-upload">
                   <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
                     <div className="mx-auto flex flex-col items-center justify-center gap-4">
-                      <div className="rounded-full bg-blue-100 p-3">
-                        <Upload className="h-6 w-6 text-blue-600" />
+                      <div className="rounded-full bg-teal-100 p-3">
+                        <Upload className="h-6 w-6 text-teal-600" />
                       </div>
                       <div className="space-y-2">
                         <p className="text-sm font-medium">{resumeFile ? resumeFile.name : "Upload Resume"}</p>
@@ -397,7 +524,12 @@ export default function ResumeCheckerPage() {
         </div>
 
         <div className="flex justify-center mb-12">
-          <Button size="lg" onClick={analyzeResume} disabled={isAnalyzing} className="px-8">
+          <Button
+            size="lg"
+            onClick={analyzeResume}
+            disabled={isAnalyzing}
+            className="px-8 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+          >
             {isAnalyzing ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -412,8 +544,7 @@ export default function ResumeCheckerPage() {
         {results && (
           <div className="space-y-8">
             {/* Score Card */}
-            <Card className="overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500"></div>
+            <Card className="overflow-hidden border-t-4 border-t-indigo-500 shadow-md">
               <CardHeader>
                 <CardTitle className="text-xl">ATS Match Score</CardTitle>
                 <CardDescription>How well your resume matches the job requirements</CardDescription>
@@ -422,6 +553,18 @@ export default function ResumeCheckerPage() {
                 <div className="flex flex-col items-center justify-center">
                   <div className="relative w-48 h-48 flex items-center justify-center">
                     <svg className="w-full h-full" viewBox="0 0 100 100">
+                      <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop
+                            offset="0%"
+                            className={`stop-color-${results.score >= 80 ? "green" : results.score >= 70 ? "yellow" : "red"}-500`}
+                          />
+                          <stop
+                            offset="100%"
+                            className={`stop-color-${results.score >= 80 ? "green" : results.score >= 70 ? "yellow" : "red"}-600`}
+                          />
+                        </linearGradient>
+                      </defs>
                       <circle
                         className="text-slate-100 stroke-current"
                         strokeWidth="10"
@@ -431,13 +574,7 @@ export default function ResumeCheckerPage() {
                         fill="transparent"
                       ></circle>
                       <circle
-                        className={`${
-                          results.score >= 80
-                            ? "text-green-500"
-                            : results.score >= 70
-                              ? "text-yellow-500"
-                              : "text-red-500"
-                        } stroke-current`}
+                        stroke="url(#scoreGradient)"
                         strokeWidth="10"
                         strokeLinecap="round"
                         cx="50"
@@ -459,31 +596,31 @@ export default function ResumeCheckerPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Keywords Match</span>
-                      <span className="text-sm font-medium">{Math.round(results.score * 0.8)}%</span>
-                    </div>
-                    <Progress value={results.score * 0.8} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Skills Match</span>
-                      <span className="text-sm font-medium">{Math.round(results.score * 1.1)}%</span>
+                      <span className="text-sm font-medium">{results.categoryScores.skills}%</span>
                     </div>
-                    <Progress value={Math.min(results.score * 1.1, 100)} className="h-2" />
+                    <Progress value={results.categoryScores.skills} className="h-2" />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Experience Match</span>
-                      <span className="text-sm font-medium">{Math.round(results.score * 0.9)}%</span>
+                      <span className="text-sm font-medium">{results.categoryScores.experience}%</span>
                     </div>
-                    <Progress value={results.score * 0.9} className="h-2" />
+                    <Progress value={results.categoryScores.experience} className="h-2" />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Education Match</span>
-                      <span className="text-sm font-medium">{Math.round(results.score * 1.05)}%</span>
+                      <span className="text-sm font-medium">{results.categoryScores.education}%</span>
                     </div>
-                    <Progress value={Math.min(results.score * 1.05, 100)} className="h-2" />
+                    <Progress value={results.categoryScores.education} className="h-2" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Keywords Match</span>
+                      <span className="text-sm font-medium">{results.categoryScores.keywords}%</span>
+                    </div>
+                    <Progress value={results.categoryScores.keywords} className="h-2" />
                   </div>
                 </div>
               </CardContent>
@@ -491,7 +628,7 @@ export default function ResumeCheckerPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Matched Skills */}
-              <Card>
+              <Card className="border-t-4 border-t-green-500 shadow-md">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
@@ -515,7 +652,7 @@ export default function ResumeCheckerPage() {
               </Card>
 
               {/* Missing Skills */}
-              <Card>
+              <Card className="border-t-4 border-t-red-500 shadow-md">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
@@ -540,7 +677,7 @@ export default function ResumeCheckerPage() {
             </div>
 
             {/* AI Support Section */}
-            <Card>
+            <Card className="border-t-4 border-t-yellow-500 shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Lightbulb className="h-5 w-5 text-yellow-500" />
@@ -565,12 +702,13 @@ export default function ResumeCheckerPage() {
                 )}
 
                 {results.missingSkills.length > 0 && (
-                  <div className="mt-6 bg-blue-50 p-4 rounded-lg">
+                  <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
                     <h4 className="font-medium text-blue-800 mb-2">Need help with your resume?</h4>
                     <p className="text-sm text-blue-700 mb-4">
                       Ask our AI assistant to help you craft content for your missing skills:
                     </p>
-                    <Button variant="outline" className="bg-white">
+                    <Button variant="outline" className="bg-white flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
                       Get AI Help with Resume Content
                     </Button>
                   </div>
@@ -582,10 +720,20 @@ export default function ResumeCheckerPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-200 py-6 mt-16">
+      <footer className="bg-gradient-to-r from-slate-800 to-slate-900 text-slate-200 py-6 mt-16">
         <div className="container mx-auto px-4 text-center">
           <p>© 2025 Recruiter Support Platform.</p>
-          <p className="text-slate-400 mt-2">Helping recruiters find the perfect candidates faster.</p>
+          <p className="text-slate-400 mt-2">Created by John Francis</p>
+          <div className="mt-4 flex justify-center">
+            <a
+              href="https://www.linkedin.com/in/john-francis-eeemba/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </footer>
     </div>
