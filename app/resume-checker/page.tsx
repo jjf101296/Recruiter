@@ -9,7 +9,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle, AlertCircle, Lightbulb, ArrowLeft, Upload, FileText, MessageSquare } from "lucide-react"
+import {
+  CheckCircle,
+  AlertCircle,
+  Lightbulb,
+  ArrowLeft,
+  Upload,
+  FileText,
+  MessageSquare,
+  Award,
+  Clock,
+  BookOpen,
+  Building,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Linkedin } from "lucide-react"
@@ -33,9 +45,22 @@ export default function ResumeCheckerPage() {
       education: number
       keywords: number
     }
-    matchedSkills: string[]
-    missingSkills: string[]
+    matchedSkills: Array<{
+      name: string
+      type: "skill" | "certification" | "education" | "experience" | "background"
+      details?: string
+    }>
+    missingSkills: Array<{
+      name: string
+      type: "skill" | "certification" | "education" | "experience" | "background"
+      details?: string
+    }>
     suggestions: string[]
+    experienceGap?: {
+      required: string
+      actual: string
+      details: string
+    }
   }
 
   const handleJobDescriptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,14 +124,32 @@ export default function ResumeCheckerPage() {
     // Extract requirements from job description
     const requirements = extractRequirements(jobDescriptionText)
 
+    // Extract years of experience required
+    const yearsRequired = extractYearsRequired(jobDescriptionText)
+
+    // Extract certifications required
+    const certificationsRequired = extractCertifications(jobDescriptionText)
+
+    // Extract background requirements
+    const backgroundRequired = extractBackground(jobDescriptionText)
+
     // Extract skills from resume
     const resumeSkills = extractSkillsFromResume(resumeText)
 
-    // Find matches and missing skills using fuzzy matching
-    const matchedSkills = []
-    const missingSkills = []
+    // Extract years of experience from resume
+    const yearsExperience = extractYearsFromResume(resumeText)
 
-    // Fuzzy matching to find similar skills (not exact matches)
+    // Extract certifications from resume
+    const resumeCertifications = extractCertificationsFromResume(resumeText)
+
+    // Extract background from resume
+    const resumeBackground = extractBackgroundFromResume(resumeText)
+
+    // Find matches and missing skills using fuzzy matching
+    const matchedSkills: ResultsType["matchedSkills"] = []
+    const missingSkills: ResultsType["missingSkills"] = []
+
+    // Match technical skills
     for (const req of requirements) {
       let found = false
       for (const skill of resumeSkills) {
@@ -117,21 +160,114 @@ export default function ResumeCheckerPage() {
           calculateSimilarity(skill.toLowerCase(), req.toLowerCase()) > 0.7
         ) {
           found = true
-          if (!matchedSkills.includes(req)) {
-            matchedSkills.push(req)
-          }
+          matchedSkills.push({
+            name: req,
+            type: "skill",
+          })
           break
         }
       }
 
-      if (!found && !missingSkills.includes(req)) {
-        missingSkills.push(req)
+      if (!found) {
+        missingSkills.push({
+          name: req,
+          type: "skill",
+        })
+      }
+    }
+
+    // Match certifications
+    for (const cert of certificationsRequired) {
+      let found = false
+      for (const resumeCert of resumeCertifications) {
+        if (
+          resumeCert.toLowerCase().includes(cert.toLowerCase()) ||
+          cert.toLowerCase().includes(resumeCert.toLowerCase())
+        ) {
+          found = true
+          matchedSkills.push({
+            name: cert,
+            type: "certification",
+            details: "Certification found in resume",
+          })
+          break
+        }
+      }
+
+      if (!found) {
+        missingSkills.push({
+          name: cert,
+          type: "certification",
+          details: "Required certification not found in resume",
+        })
+      }
+    }
+
+    // Match background
+    let backgroundMatch = false
+    let backgroundDetail = ""
+
+    for (const bg of backgroundRequired) {
+      for (const resumeBg of resumeBackground) {
+        if (resumeBg.toLowerCase().includes(bg.toLowerCase()) || bg.toLowerCase().includes(resumeBg.toLowerCase())) {
+          backgroundMatch = true
+          backgroundDetail = `Background in ${bg} found in resume`
+          matchedSkills.push({
+            name: bg,
+            type: "background",
+            details: backgroundDetail,
+          })
+          break
+        }
+      }
+
+      if (!backgroundMatch) {
+        missingSkills.push({
+          name: bg,
+          type: "background",
+          details: `Required background in ${bg} not found in resume`,
+        })
+      }
+    }
+
+    // Check experience gap
+    let experienceGap = null
+    if (yearsRequired && yearsExperience) {
+      const reqYears = Number.parseInt(yearsRequired)
+      const expYears = Number.parseInt(yearsExperience)
+
+      if (expYears < reqYears) {
+        experienceGap = {
+          required: `${reqYears} years`,
+          actual: `${expYears} years`,
+          details: `The job requires ${reqYears} years of experience, but the resume shows only ${expYears} years`,
+        }
+
+        missingSkills.push({
+          name: `${reqYears} years of experience`,
+          type: "experience",
+          details: `Resume shows only ${expYears} years of experience`,
+        })
+      } else {
+        matchedSkills.push({
+          name: `${reqYears}+ years of experience`,
+          type: "experience",
+          details: `Resume shows ${expYears} years of experience`,
+        })
       }
     }
 
     // Calculate category scores
-    const skillsScore = Math.min(Math.floor((matchedSkills.length / (requirements.length || 1)) * 100), 100)
-    const experienceScore = Math.floor(Math.random() * 21) + 60 // Random score between 60-80
+    const skillsScore = Math.min(
+      Math.floor((matchedSkills.filter((s) => s.type === "skill").length / (requirements.length || 1)) * 100),
+      100,
+    )
+
+    // Experience score based on years gap
+    const experienceScore = experienceGap
+      ? Math.max(60, 100 - (Number.parseInt(yearsRequired) - Number.parseInt(yearsExperience)) * 10)
+      : Math.floor(Math.random() * 21) + 70 // Random score between 70-90 if no specific gap
+
     const educationScore = Math.floor(Math.random() * 21) + 70 // Random score between 70-90
     const keywordsScore = Math.floor(Math.random() * 21) + 65 // Random score between 65-85
 
@@ -141,7 +277,7 @@ export default function ResumeCheckerPage() {
     )
 
     // Generate suggestions for missing skills
-    const suggestions = generateSuggestions(missingSkills, matchedSkills)
+    const suggestions = generateSuggestions(missingSkills, matchedSkills, experienceGap)
 
     // Simulate analysis with a timeout
     setTimeout(() => {
@@ -157,11 +293,113 @@ export default function ResumeCheckerPage() {
         matchedSkills: matchedSkills,
         missingSkills: missingSkills,
         suggestions: suggestions,
+        experienceGap: experienceGap,
       }
 
       setResults(analysisResults)
       setIsAnalyzing(false)
     }, 2000)
+  }
+
+  // Extract years required from job description
+  const extractYearsRequired = (text: string): string | null => {
+    // Fixed regex pattern to avoid syntax errors
+    const regex = /\d+\s*(?:year|years|yr|yrs)/i
+    const match = text.match(regex)
+    if (!match) return null
+
+    // Extract just the number
+    const numMatch = match[0].match(/\d+/)
+    return numMatch ? numMatch[0] : null
+  }
+
+  // Extract years from resume
+  const extractYearsFromResume = (text: string): string | null => {
+    // For demo purposes, generate a random number between 1-7
+    return Math.floor(Math.random() * 7 + 1).toString()
+  }
+
+  // Extract certifications required
+  const extractCertifications = (text: string): string[] => {
+    // List of certifications to look for
+    const certifications = [
+      "AWS",
+      "Azure",
+      "GCP",
+      "PMP",
+      "CISSP",
+      "CISM",
+      "CISA",
+      "ITIL",
+      "Scrum",
+      "CSM",
+      "CSPO",
+      "CSD",
+      "SAFe",
+      "CompTIA",
+      "MCSE",
+      "CCNA",
+      "CCNP",
+      "CCIE",
+      "CEH",
+      "OSCP",
+    ]
+
+    // Simple word matching without regex
+    const found = []
+    const lowerText = text.toLowerCase()
+
+    for (const cert of certifications) {
+      const lowerCert = cert.toLowerCase()
+      // Check if the certification appears as a whole word
+      if (
+        lowerText.includes(` ${lowerCert} `) ||
+        lowerText.includes(` ${lowerCert}.`) ||
+        lowerText.includes(` ${lowerCert},`) ||
+        lowerText.includes(`(${lowerCert})`) ||
+        lowerText.includes(`${lowerCert}:`) ||
+        lowerText.startsWith(`${lowerCert} `) ||
+        lowerText.endsWith(` ${lowerCert}`)
+      ) {
+        found.push(cert)
+      }
+    }
+
+    return found
+  }
+
+  // Extract certifications from resume
+  const extractCertificationsFromResume = (text: string): string[] => {
+    // Use the same function for both job description and resume
+    return extractCertifications(text)
+  }
+
+  // Extract background requirements
+  const extractBackground = (text: string): string[] => {
+    const backgrounds = ["banking", "finance", "healthcare", "retail", "manufacturing", "technology", "education"]
+    const found = []
+
+    for (const bg of backgrounds) {
+      if (text.toLowerCase().includes(bg)) {
+        found.push(bg)
+      }
+    }
+
+    return found
+  }
+
+  // Extract background from resume
+  const extractBackgroundFromResume = (text: string): string[] => {
+    const backgrounds = ["banking", "finance", "healthcare", "retail", "manufacturing", "technology", "education"]
+    const found = []
+
+    for (const bg of backgrounds) {
+      if (text.toLowerCase().includes(bg)) {
+        found.push(bg)
+      }
+    }
+
+    return found
   }
 
   // Calculate similarity between two strings (Levenshtein distance based)
@@ -195,12 +433,29 @@ export default function ResumeCheckerPage() {
     return matchCount / Math.max(words1.length, words2.length)
   }
 
-  const generateSuggestions = (missingSkills: string[], matchedSkills: string[]): string[] => {
+  const generateSuggestions = (
+    missingSkills: ResultsType["missingSkills"],
+    matchedSkills: ResultsType["matchedSkills"],
+    experienceGap: any,
+  ): string[] => {
     const suggestions = []
 
     // Generate specific suggestions for missing skills
     for (let i = 0; i < Math.min(missingSkills.length, 3); i++) {
-      suggestions.push(`Add experience with ${missingSkills[i]} to your resume to match this job requirement`)
+      const skill = missingSkills[i]
+
+      if (skill.type === "skill") {
+        suggestions.push(`Add experience with ${skill.name} to your resume to match this job requirement`)
+      } else if (skill.type === "certification") {
+        suggestions.push(`Highlight your ${skill.name} certification or consider obtaining this credential`)
+      } else if (skill.type === "background") {
+        suggestions.push(`Emphasize any experience related to ${skill.name} in your work history`)
+      }
+    }
+
+    // Add suggestion for experience gap
+    if (experienceGap) {
+      suggestions.push(`Highlight quality of experience to compensate for the ${experienceGap.required} requirement`)
     }
 
     // Add general suggestions
@@ -396,6 +651,23 @@ export default function ResumeCheckerPage() {
     if (score >= 80) return "from-green-500 to-green-600"
     if (score >= 70) return "from-yellow-500 to-yellow-600"
     return "from-red-500 to-red-600"
+  }
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "skill":
+        return <Award className="h-4 w-4 text-blue-500" />
+      case "certification":
+        return <Award className="h-4 w-4 text-purple-500" />
+      case "experience":
+        return <Clock className="h-4 w-4 text-green-500" />
+      case "education":
+        return <BookOpen className="h-4 w-4 text-yellow-500" />
+      case "background":
+        return <Building className="h-4 w-4 text-orange-500" />
+      default:
+        return <Award className="h-4 w-4 text-blue-500" />
+    }
   }
 
   return (
@@ -623,6 +895,19 @@ export default function ResumeCheckerPage() {
                     <Progress value={results.categoryScores.keywords} className="h-2" />
                   </div>
                 </div>
+
+                {/* Experience Gap Alert */}
+                {results.experienceGap && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-yellow-800">Experience Gap Detected</h4>
+                        <p className="text-sm text-yellow-700 mt-1">{results.experienceGap.details}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -632,16 +917,22 @@ export default function ResumeCheckerPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    Matched Skills
+                    Matched Skills & Requirements
                   </CardTitle>
-                  <CardDescription>Skills and keywords found in your resume</CardDescription>
+                  <CardDescription>Skills and requirements found in your resume</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {results.matchedSkills.length > 0 ? (
                       results.matchedSkills.map((skill, index) => (
-                        <Badge key={index} variant="outline" className="bg-green-50 border-green-200 text-green-700">
-                          {skill}
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-green-50 border-green-200 text-green-700 flex items-center gap-1.5 py-1.5"
+                        >
+                          {getTypeIcon(skill.type)}
+                          <span>{skill.name}</span>
+                          {skill.details && <span className="text-xs text-green-600 ml-1 opacity-70">✓</span>}
                         </Badge>
                       ))
                     ) : (
@@ -656,16 +947,21 @@ export default function ResumeCheckerPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-red-500" />
-                    Missing Skills
+                    Missing Skills & Requirements
                   </CardTitle>
-                  <CardDescription>Important skills not found in your resume</CardDescription>
+                  <CardDescription>Important requirements not found in your resume</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {results.missingSkills.length > 0 ? (
                       results.missingSkills.map((skill, index) => (
-                        <Badge key={index} variant="outline" className="bg-red-50 border-red-200 text-red-700">
-                          {skill}
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-red-50 border-red-200 text-red-700 flex items-center gap-1.5 py-1.5"
+                        >
+                          {getTypeIcon(skill.type)}
+                          <span>{skill.name}</span>
                         </Badge>
                       ))
                     ) : (

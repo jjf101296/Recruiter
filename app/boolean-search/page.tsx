@@ -2,21 +2,23 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Wand2, CheckCircle2, ArrowLeft, Upload, FileText, Linkedin } from "lucide-react"
+import { Copy, Wand2, CheckCircle2, ArrowLeft, Upload, FileText, Linkedin, Info, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 
 export default function BooleanSearchPage() {
   const [jobDescription, setJobDescription] = useState("")
   const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null)
   const [highlightedJD, setHighlightedJD] = useState<string>("")
-  const [extractedSkills, setExtractedSkills] = useState<string[]>([])
+  const [extractedSkills, setExtractedSkills] = useState<{ name: string; description: string; priority: number }[]>([])
   const [booleanStrings, setBooleanStrings] = useState({
     and: "",
     or: "",
@@ -25,6 +27,7 @@ export default function BooleanSearchPage() {
   const [copied, setCopied] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("jd-text")
   const { toast } = useToast()
+  const jdContentRef = useRef<HTMLDivElement>(null)
 
   const handleJobDescriptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -61,118 +64,189 @@ export default function BooleanSearchPage() {
     const educationPattern =
       /\b(Bachelor'?s|Master'?s|PhD|Doctorate|MBA|BSc|MSc|BA|MA|BS|MS|degree|education|university|college)\b/gi
     const technicalSkillsPattern =
-      /\b(JavaScript|Python|Java|C\+\+|C#|Ruby|PHP|Swift|Kotlin|Go|Rust|SQL|NoSQL|MongoDB|MySQL|PostgreSQL|Oracle|React|Angular|Vue|Node\.js|Express|Django|Flask|Spring|ASP\.NET|HTML|CSS|AWS|Azure|GCP|Docker|Kubernetes|CI\/CD|Git|DevOps|Agile|Scrum|REST|API|JSON|XML|GraphQL)\b/gi
+      /\b(JavaScript|Python|Java|C\+\+|C#|Ruby|PHP|Swift|Kotlin|Go|Rust|SQL|NoSQL|MongoDB|MySQL|PostgreSQL|Oracle|React|Angular|Vue|Node\.js|Express|Django|Flask|Spring|ASP\.NET|\.NET|\.NET Core|HTML|CSS|AWS|Azure|GCP|Docker|Kubernetes|CI\/CD|Git|DevOps|Agile|Scrum|REST|API|JSON|XML|GraphQL)\b/gi
     const backgroundPattern = /\b(background|experience|industry|sector|field)\b/gi
 
+    // Preserve line breaks by replacing them with a placeholder
+    const lineBreakPlaceholder = "LINE_BREAK_PLACEHOLDER"
+    let processedText = text.replace(/\n/g, lineBreakPlaceholder)
+
     // Apply highlighting with HTML spans
-    const highlightedText = text
+    processedText = processedText
       .replace(yearsPattern, '<span class="highlight-years">$&</span>')
       .replace(certificationPattern, '<span class="highlight-certification">$&</span>')
       .replace(educationPattern, '<span class="highlight-education">$&</span>')
       .replace(technicalSkillsPattern, '<span class="highlight-technical">$&</span>')
       .replace(backgroundPattern, '<span class="highlight-background">$&</span>')
 
-    setHighlightedJD(highlightedText)
+    // Restore line breaks
+    processedText = processedText.replace(new RegExp(lineBreakPlaceholder, "g"), "<br>")
+
+    setHighlightedJD(processedText)
   }
 
   const extractSkillsFromJD = (text: string) => {
-    // This is a simplified implementation
-    // In a real app, you'd use more sophisticated NLP techniques
-    const commonSkills = [
-      "javascript",
-      "react",
-      "node.js",
-      "python",
-      "java",
-      "c#",
-      ".net",
-      "aws",
-      "azure",
-      "gcp",
-      "sql",
-      "nosql",
-      "mongodb",
-      "postgresql",
-      "mysql",
-      "docker",
-      "kubernetes",
-      "ci/cd",
-      "agile",
-      "scrum",
-      "product management",
-      "project management",
-      "leadership",
-      "communication",
-      "teamwork",
-      "problem solving",
-      "critical thinking",
-      "data analysis",
-      "machine learning",
-      "ai",
-      "artificial intelligence",
-      "devops",
-      "cloud",
-      "frontend",
-      "backend",
-      "full stack",
-      "mobile",
-      "ios",
-      "android",
-      "react native",
-      "flutter",
-      "ux",
-      "ui",
-      "user experience",
-      "user interface",
-      "design",
-      "figma",
-      "sketch",
-      "adobe",
-      "photoshop",
-      "illustrator",
-      "marketing",
-      "sales",
-      "customer success",
-      "support",
-      "operations",
-      "finance",
-      "accounting",
-      "human resources",
-      "hr",
-      "recruiting",
-      "talent acquisition",
+    // This is a more targeted implementation focusing on highlighted elements
+    const skillsData = [
+      // Technical Skills
+      { name: "JavaScript", description: "A programming language that enables interactive web pages", priority: 3 },
+      { name: "Python", description: "A high-level programming language for general-purpose programming", priority: 3 },
+      { name: "Java", description: "A class-based, object-oriented programming language", priority: 3 },
+      { name: "C#", description: "A multi-paradigm programming language developed by Microsoft", priority: 3 },
+      {
+        name: ".NET",
+        description:
+          "A free, cross-platform, open-source developer platform for building many different types of applications",
+        priority: 3,
+      },
+      {
+        name: ".NET Core",
+        description: "A cross-platform version of .NET for building websites, services, and console apps",
+        priority: 3,
+      },
+      { name: "ASP.NET", description: "A web framework for building web apps on the .NET platform", priority: 3 },
+      { name: "React", description: "A JavaScript library for building user interfaces", priority: 3 },
+      { name: "Angular", description: "A platform for building mobile and desktop web applications", priority: 3 },
+      { name: "Vue.js", description: "A progressive framework for building user interfaces", priority: 3 },
+      { name: "Node.js", description: "A JavaScript runtime built on Chrome's V8 JavaScript engine", priority: 3 },
+      {
+        name: "SQL",
+        description: "A domain-specific language used for managing data in relational databases",
+        priority: 3,
+      },
+      {
+        name: "NoSQL",
+        description:
+          "A mechanism for storage and retrieval of data that is modeled differently from relational databases",
+        priority: 3,
+      },
+      { name: "AWS", description: "Amazon Web Services - a cloud computing platform", priority: 3 },
+      { name: "Azure", description: "Microsoft's cloud computing service", priority: 3 },
+      { name: "GCP", description: "Google Cloud Platform - a suite of cloud computing services", priority: 3 },
+      {
+        name: "Docker",
+        description: "A platform for developing, shipping, and running applications in containers",
+        priority: 3,
+      },
+      {
+        name: "Kubernetes",
+        description:
+          "An open-source system for automating deployment, scaling, and management of containerized applications",
+        priority: 3,
+      },
+
+      // Certifications
+      {
+        name: "CCNA",
+        description: "Cisco Certified Network Associate - Entry-level networking certification",
+        priority: 2,
+      },
+      {
+        name: "AWS Certified",
+        description: "Certification validating cloud expertise with Amazon Web Services",
+        priority: 2,
+      },
+      { name: "Azure Certified", description: "Microsoft certification for Azure cloud skills", priority: 2 },
+      { name: "PMP", description: "Project Management Professional - certification for project managers", priority: 2 },
+      { name: "CISSP", description: "Certified Information Systems Security Professional", priority: 2 },
+
+      // Soft Skills
+      { name: "leadership", description: "Ability to lead and guide teams", priority: 1 },
+      { name: "communication", description: "Effective verbal and written communication skills", priority: 1 },
+      { name: "teamwork", description: "Ability to work collaboratively in a team environment", priority: 1 },
+      { name: "problem solving", description: "Ability to identify and resolve complex issues", priority: 1 },
+      { name: "critical thinking", description: "Analytical thinking and evaluation skills", priority: 1 },
     ]
 
-    const text_lower = text.toLowerCase()
-    const foundSkills = commonSkills.filter((skill) => text_lower.includes(skill.toLowerCase()))
+    // Extract highlighted technical skills from the job description
+    const techSkillMatches = [
+      ...text.matchAll(
+        /\b(JavaScript|Python|Java|C\+\+|C#|Ruby|PHP|Swift|Kotlin|Go|Rust|SQL|NoSQL|MongoDB|MySQL|PostgreSQL|Oracle|React|Angular|Vue|Node\.js|Express|Django|Flask|Spring|ASP\.NET|\.NET|\.NET Core|HTML|CSS|AWS|Azure|GCP|Docker|Kubernetes|CI\/CD|Git|DevOps|Agile|Scrum|REST|API|JSON|XML|GraphQL)\b/gi,
+      ),
+    ]
+    const certMatches = [
+      ...text.matchAll(
+        /\b(certification|certified|certificate|AWS|Azure|GCP|PMP|CISSP|CISM|CISA|ITIL|Scrum|CSM|CSPO|CSD|SAFe|CompTIA|MCSE|CCNA|CCNP|CCIE|CEH|OSCP)\b/gi,
+      ),
+    ]
 
-    // Add any capitalized words that might be technologies or tools
-    const potentialTechWords = text.match(/\b[A-Z][a-zA-Z]+\b/g) || []
-    const techWords = potentialTechWords.filter(
-      (word) =>
-        !foundSkills.includes(word.toLowerCase()) &&
-        word.length > 2 &&
-        !["The", "And", "For", "With", "This", "That", "Our", "Your", "Their"].includes(word),
+    // Extract years of experience
+    const yearsMatches = [...text.matchAll(/\b([0-9]+[+]?)\s*(years?|yrs?)\b|\b([0-9]+[+]?)\s*\+\s*(years?|yrs?)\b/gi)]
+
+    // Create a set of found skills
+    const foundSkillNames = new Set()
+
+    // Add all highlighted technical skills
+    techSkillMatches.forEach((match) => {
+      foundSkillNames.add(match[0].toLowerCase())
+    })
+
+    // Add all highlighted certifications
+    certMatches.forEach((match) => {
+      foundSkillNames.add(match[0].toLowerCase())
+    })
+
+    // Filter the skills data to only include found skills
+    const foundSkills = skillsData.filter(
+      (skill) =>
+        foundSkillNames.has(skill.name.toLowerCase()) ||
+        [...foundSkillNames].some(
+          (name) => name.includes(skill.name.toLowerCase()) || skill.name.toLowerCase().includes(name),
+        ),
     )
 
-    return [...new Set([...foundSkills, ...techWords])]
+    // Sort by priority (higher priority first)
+    foundSkills.sort((a, b) => b.priority - a.priority)
+
+    // Limit to top 10 skills
+    return foundSkills.slice(0, 10)
   }
 
-  const generateBooleanStrings = (skills: string[]) => {
+  const generateBooleanStrings = (skills: { name: string; description: string; priority: number }[]) => {
     if (skills.length === 0) return { and: "", or: "" }
 
+    // Extract just the skill names
+    const skillNames = skills.map((skill) => skill.name)
+
     // OR string (all skills with OR)
-    const orString = skills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
+    const orString = skillNames.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
 
     // AND string (mixed with AND/OR for better results)
-    // Group skills into categories
-    const primarySkills = skills.slice(0, Math.ceil(skills.length / 3))
-    const secondarySkills = skills.slice(Math.ceil(skills.length / 3))
+    // Group skills into categories based on priority
+    const highPrioritySkills = skills.filter((skill) => skill.priority === 3).map((skill) => skill.name)
+    const mediumPrioritySkills = skills.filter((skill) => skill.priority === 2).map((skill) => skill.name)
 
-    const primaryString = primarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
-    const secondaryString = secondarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
+    // If we have high priority skills, use them for the AND string
+    let andString = ""
+    if (highPrioritySkills.length >= 2) {
+      // Take the top 2 high priority skills and connect with AND
+      const primaryString = highPrioritySkills
+        .slice(0, 2)
+        .map((skill) => (skill.includes(" ") ? `"${skill}"` : skill))
+        .join(" AND ")
 
-    const andString = `(${primaryString}) AND (${secondaryString})`
+      // Take the rest of the skills and connect with OR
+      const secondarySkills = [...highPrioritySkills.slice(2), ...mediumPrioritySkills]
+      const secondaryString =
+        secondarySkills.length > 0
+          ? secondarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
+          : ""
+
+      andString = secondaryString ? `(${primaryString}) AND (${secondaryString})` : primaryString
+    } else {
+      // If we don't have enough high priority skills, use the top skills
+      const primarySkills = skillNames.slice(0, Math.min(2, skillNames.length))
+      const secondarySkills = skillNames.slice(Math.min(2, skillNames.length))
+
+      const primaryString = primarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" AND ")
+
+      const secondaryString =
+        secondarySkills.length > 0
+          ? secondarySkills.map((skill) => (skill.includes(" ") ? `"${skill}"` : skill)).join(" OR ")
+          : ""
+
+      andString = secondaryString ? `(${primaryString}) AND (${secondaryString})` : primaryString
+    }
 
     return { and: andString, or: orString }
   }
@@ -335,6 +409,7 @@ export default function BooleanSearchPage() {
 
                   {/* Highlighted Content */}
                   <div
+                    ref={jdContentRef}
                     className="p-4 bg-white rounded-md border border-slate-200 max-h-[300px] overflow-auto text-sm"
                     dangerouslySetInnerHTML={{ __html: highlightedJD }}
                     style={
@@ -356,19 +431,65 @@ export default function BooleanSearchPage() {
               <div className="space-y-6">
                 <Card className="border-t-4 border-t-green-500 shadow-md">
                   <CardHeader>
-                    <CardTitle className="text-xl">Extracted Skills</CardTitle>
-                    <CardDescription>Key skills identified from the job description</CardDescription>
+                    <CardTitle className="text-xl">Key Skills & Requirements</CardTitle>
+                    <CardDescription>Most important skills identified from the job description</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {extractedSkills.map((skill, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-sm bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200"
-                        >
-                          {skill}
-                        </Badge>
+                        <TooltipProvider key={index}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Badge
+                                    variant="secondary"
+                                    className={`text-sm cursor-pointer ${
+                                      skill.priority === 3
+                                        ? "bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200"
+                                        : skill.priority === 2
+                                          ? "bg-gradient-to-r from-green-50 to-teal-50 border border-green-200"
+                                          : "bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200"
+                                    }`}
+                                  >
+                                    {skill.name}
+                                  </Badge>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                      <Info className="h-5 w-5 text-blue-500" />
+                                      {skill.name}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <div className="py-4">
+                                    <p>{skill.description}</p>
+                                    <div className="mt-4 pt-4 border-t border-slate-200">
+                                      <h4 className="text-sm font-medium mb-2">Priority Level:</h4>
+                                      <div className="flex items-center gap-2">
+                                        {skill.priority === 3 ? (
+                                          <Badge className="bg-blue-500">High</Badge>
+                                        ) : skill.priority === 2 ? (
+                                          <Badge className="bg-green-500">Medium</Badge>
+                                        ) : (
+                                          <Badge className="bg-yellow-500">Low</Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <DialogClose asChild>
+                                    <Button variant="outline" className="absolute top-2 right-2 h-8 w-8 p-0">
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </DialogClose>
+                                </DialogContent>
+                              </Dialog>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Click for details about {skill.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ))}
                     </div>
                   </CardContent>
