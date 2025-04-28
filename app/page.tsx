@@ -7,9 +7,9 @@ import { useEffect, useState } from "react"
 export default function HomePage() {
   const [currentTime, setCurrentTime] = useState({
     est: "",
-    pst: "",
     cst: "",
     mst: "",
+    pst: "",
     ist: "",
   })
 
@@ -17,22 +17,22 @@ export default function HomePage() {
     const updateTime = () => {
       const now = new Date()
 
-      // EST (UTC-5)
-      const estTime = new Date(now.getTime() - (now.getTimezoneOffset() + 300) * 60000)
-      // PST (UTC-8)
-      const pstTime = new Date(now.getTime() - (now.getTimezoneOffset() + 480) * 60000)
-      // CST (UTC-6)
-      const cstTime = new Date(now.getTime() - (now.getTimezoneOffset() + 360) * 60000)
-      // MST (UTC-7)
-      const mstTime = new Date(now.getTime() - (now.getTimezoneOffset() + 420) * 60000)
-      // IST (UTC+5:30)
-      const istTime = new Date(now.getTime() - (now.getTimezoneOffset() - 330) * 60000)
+      // EST (UTC-5) - Eastern Standard Time
+      const estTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }))
+      // CST (UTC-6) - Central Standard Time
+      const cstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Chicago" }))
+      // MST (UTC-7) - Mountain Standard Time
+      const mstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Denver" }))
+      // PST (UTC-8) - Pacific Standard Time
+      const pstTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }))
+      // IST (UTC+5:30) - Indian Standard Time
+      const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }))
 
       setCurrentTime({
         est: estTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        pst: pstTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         cst: cstTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         mst: mstTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        pst: pstTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         ist: istTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
       })
     }
@@ -52,13 +52,13 @@ export default function HomePage() {
               <span className="font-semibold mr-2">EST:</span> {currentTime.est}
             </div>
             <div className="flex items-center">
-              <span className="font-semibold mr-2">PST:</span> {currentTime.pst}
-            </div>
-            <div className="flex items-center">
               <span className="font-semibold mr-2">CST:</span> {currentTime.cst}
             </div>
             <div className="flex items-center">
               <span className="font-semibold mr-2">MST:</span> {currentTime.mst}
+            </div>
+            <div className="flex items-center">
+              <span className="font-semibold mr-2">PST:</span> {currentTime.pst}
             </div>
             <div className="flex items-center">
               <span className="font-semibold mr-2">IST:</span> {currentTime.ist}
@@ -74,23 +74,16 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight">
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Welcome to the Recruiters Support
+                Welcome to the Recruiter Support Platform
               </span>
             </h1>
             <p className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto">
-              Powerful tools to streamline your recruitment process and find the perfect candidates faster.
+              Professional tools to streamline your recruitment process and find the perfect candidates faster.
             </p>
 
             {/* Author Section */}
             <div className="flex flex-col items-center justify-center mt-8 mb-4">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-blue-500 mb-2">
-                <img
-                  src="https://media.licdn.com/dms/image/D5603AQFPgTHUHgR4Dw/profile-displayphoto-shrink_800_800/0/1691394087331?e=1719446400&v=beta&t=Ij9-K_7QJVpVDtnfrHYEVLnYD_kvAVNpJoT-_JJiKQQ"
-                  alt="John Francis"
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <p className="text-slate-700 font-medium">John Francis</p>
+              <p className="text-slate-700 font-medium text-lg">Founder: John Francis</p>
               <p className="text-slate-600 text-sm max-w-md text-center mb-2">
                 Technical Recruiter | Talent Acquisition Specialist | Helping companies find top tech talent
               </p>
@@ -113,7 +106,7 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          Choose Your Tool
+          Professional Recruitment Tools
         </h2>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -143,7 +136,7 @@ export default function HomePage() {
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
                       <ChevronRight className="h-3 w-3 text-blue-600" />
                     </div>
-                    Highlight important job requirements
+                    Identify domain-specific requirements
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
@@ -249,6 +242,52 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Graphics Section */}
+      <section className="container mx-auto px-4 py-12 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl my-12">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Streamline Your Recruitment Process
+            </h2>
+            <p className="text-slate-700 mb-4">
+              Our professional tools help you find the right candidates faster and more efficiently. Save time with
+              automated Boolean search generation, resume matching, and candidate verification.
+            </p>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2">
+                <div className="mt-1 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                  <CheckIcon className="h-3 w-3 text-blue-600" />
+                </div>
+                <span>Reduce time-to-hire by up to 30%</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="mt-1 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                  <CheckIcon className="h-3 w-3 text-blue-600" />
+                </div>
+                <span>Improve candidate quality with targeted searches</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="mt-1 w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                  <CheckIcon className="h-3 w-3 text-blue-600" />
+                </div>
+                <span>Verify candidate eligibility quickly and accurately</span>
+              </li>
+            </ul>
+          </div>
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-md">
+              <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-100 rounded-full opacity-60"></div>
+              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-indigo-100 rounded-full opacity-60"></div>
+              <img
+                src="/placeholder.svg?height=300&width=400"
+                alt="Recruitment Process"
+                className="rounded-lg shadow-xl relative z-10"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gradient-to-r from-slate-800 to-slate-900 text-slate-200 py-8 mt-16">
         <div className="container mx-auto px-4 text-center">
@@ -285,6 +324,25 @@ function ChevronRight(props) {
       strokeLinejoin="round"
     >
       <path d="m9 18 6-6-6-6" />
+    </svg>
+  )
+}
+
+function CheckIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="20 6 9 17 4 12" />
     </svg>
   )
 }

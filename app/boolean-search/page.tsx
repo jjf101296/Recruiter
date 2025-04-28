@@ -14,6 +14,89 @@ import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 
+// Domain-specific skill sets
+const domainSkills = {
+  "network engineer": [
+    { name: "router", description: "Network device that forwards data packets between computer networks" },
+    { name: "switch", description: "Network device that connects devices on a computer network" },
+    {
+      name: "firewall",
+      description: "Network security device that monitors and filters incoming and outgoing network traffic",
+    },
+    { name: "CCNA", description: "Cisco Certified Network Associate certification" },
+    { name: "CCNP", description: "Cisco Certified Network Professional certification" },
+    { name: "Cisco", description: "Leading networking equipment manufacturer" },
+    { name: "Juniper", description: "Network equipment manufacturer specializing in routing and switching" },
+    { name: "load balancer", description: "Device that distributes network traffic across multiple servers" },
+    { name: "VPN", description: "Virtual Private Network for secure connections" },
+    { name: "OSPF", description: "Open Shortest Path First routing protocol" },
+    { name: "BGP", description: "Border Gateway Protocol for internet routing" },
+    { name: "MPLS", description: "Multiprotocol Label Switching for high-performance networks" },
+    { name: "SDN", description: "Software-Defined Networking" },
+  ],
+  "cyber security": [
+    { name: "NIST", description: "National Institute of Standards and Technology framework" },
+    { name: "penetration testing", description: "Method of evaluating security by simulating attacks" },
+    { name: "vulnerability assessment", description: "Process of identifying security vulnerabilities" },
+    { name: "SIEM", description: "Security Information and Event Management" },
+    { name: "SOC", description: "Security Operations Center" },
+    { name: "incident response", description: "Organized approach to addressing security breaches" },
+    { name: "threat hunting", description: "Proactively searching for cyber threats" },
+    { name: "CISSP", description: "Certified Information Systems Security Professional" },
+    { name: "CEH", description: "Certified Ethical Hacker certification" },
+    { name: "ISO 27001", description: "Information security management standard" },
+    { name: "zero trust", description: "Security model that requires verification for all users" },
+    { name: "malware analysis", description: "Process of studying malicious software" },
+  ],
+  "software developer": [
+    { name: "JavaScript", description: "Programming language for web development" },
+    { name: "Python", description: "High-level programming language" },
+    { name: "Java", description: "Object-oriented programming language" },
+    { name: "C#", description: "Programming language developed by Microsoft" },
+    { name: "React", description: "JavaScript library for building user interfaces" },
+    { name: "Angular", description: "TypeScript-based web application framework" },
+    { name: "Vue.js", description: "JavaScript framework for building user interfaces" },
+    { name: "Node.js", description: "JavaScript runtime built on Chrome's V8 JavaScript engine" },
+    { name: "SQL", description: "Structured Query Language for managing databases" },
+    { name: "NoSQL", description: "Database that provides a mechanism for storage and retrieval of data" },
+    { name: "Git", description: "Distributed version control system" },
+    { name: "CI/CD", description: "Continuous Integration and Continuous Deployment" },
+    { name: "Agile", description: "Software development methodology" },
+    { name: "Scrum", description: "Agile framework for managing work" },
+  ],
+  "data scientist": [
+    { name: "machine learning", description: "Field of AI focused on building systems that learn from data" },
+    { name: "deep learning", description: "Subset of machine learning using neural networks" },
+    { name: "Python", description: "Programming language commonly used in data science" },
+    { name: "R", description: "Programming language for statistical computing" },
+    { name: "TensorFlow", description: "Open-source machine learning framework" },
+    { name: "PyTorch", description: "Open-source machine learning library" },
+    { name: "SQL", description: "Language for managing and querying databases" },
+    { name: "data visualization", description: "Graphical representation of information and data" },
+    { name: "statistical analysis", description: "Collection and interpretation of data" },
+    { name: "Pandas", description: "Data manipulation and analysis library" },
+    { name: "NumPy", description: "Library for numerical computations" },
+    { name: "Jupyter", description: "Web application for creating and sharing documents with live code" },
+  ],
+  "devops engineer": [
+    { name: "Docker", description: "Platform for developing, shipping, and running applications in containers" },
+    { name: "Kubernetes", description: "Container orchestration system" },
+    { name: "AWS", description: "Amazon Web Services cloud platform" },
+    { name: "Azure", description: "Microsoft's cloud computing service" },
+    { name: "GCP", description: "Google Cloud Platform" },
+    { name: "Terraform", description: "Infrastructure as code software tool" },
+    {
+      name: "Ansible",
+      description: "Open-source software provisioning, configuration management, and application-deployment tool",
+    },
+    { name: "Jenkins", description: "Open-source automation server" },
+    { name: "CI/CD", description: "Continuous Integration and Continuous Deployment" },
+    { name: "Git", description: "Distributed version control system" },
+    { name: "monitoring", description: "Observing and checking the progress or quality of something over time" },
+    { name: "logging", description: "Recording of events in a system" },
+  ],
+}
+
 export default function BooleanSearchPage() {
   const [jobDescription, setJobDescription] = useState("")
   const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null)
@@ -26,6 +109,7 @@ export default function BooleanSearchPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("jd-text")
+  const [jobType, setJobType] = useState<string>("")
   const { toast } = useToast()
   const jdContentRef = useRef<HTMLDivElement>(null)
 
@@ -53,8 +137,48 @@ export default function BooleanSearchPage() {
   useEffect(() => {
     if (jobDescription) {
       highlightJobDescription(jobDescription)
+      detectJobType(jobDescription)
     }
   }, [jobDescription])
+
+  const detectJobType = (text: string) => {
+    const lowerText = text.toLowerCase()
+
+    // Check for job type keywords
+    if (
+      lowerText.includes("network engineer") ||
+      lowerText.includes("network administrator") ||
+      lowerText.includes("network architect")
+    ) {
+      setJobType("network engineer")
+    } else if (
+      lowerText.includes("cyber security") ||
+      lowerText.includes("information security") ||
+      lowerText.includes("security analyst")
+    ) {
+      setJobType("cyber security")
+    } else if (
+      lowerText.includes("software developer") ||
+      lowerText.includes("software engineer") ||
+      lowerText.includes("programmer")
+    ) {
+      setJobType("software developer")
+    } else if (
+      lowerText.includes("data scientist") ||
+      lowerText.includes("data analyst") ||
+      lowerText.includes("machine learning")
+    ) {
+      setJobType("data scientist")
+    } else if (
+      lowerText.includes("devops") ||
+      lowerText.includes("site reliability") ||
+      lowerText.includes("platform engineer")
+    ) {
+      setJobType("devops engineer")
+    } else {
+      setJobType("")
+    }
+  }
 
   const highlightJobDescription = (text: string) => {
     // Define regex patterns for different elements
@@ -79,6 +203,15 @@ export default function BooleanSearchPage() {
       .replace(technicalSkillsPattern, '<span class="highlight-technical">$&</span>')
       .replace(backgroundPattern, '<span class="highlight-background">$&</span>')
 
+    // Add domain-specific skill highlighting if job type is detected
+    if (jobType && domainSkills[jobType]) {
+      const domainSkillsRegex = new RegExp(
+        `\\b(${domainSkills[jobType].map((skill) => skill.name).join("|")})\\b`,
+        "gi",
+      )
+      processedText = processedText.replace(domainSkillsRegex, '<span class="highlight-domain-skill">$&</span>')
+    }
+
     // Restore line breaks
     processedText = processedText.replace(new RegExp(lineBreakPlaceholder, "g"), "<br>")
 
@@ -86,7 +219,7 @@ export default function BooleanSearchPage() {
   }
 
   const extractSkillsFromJD = (text: string) => {
-    // This is a more targeted implementation focusing on highlighted elements
+    // Base skills data
     const skillsData = [
       // Technical Skills
       { name: "JavaScript", description: "A programming language that enables interactive web pages", priority: 3 },
@@ -158,6 +291,17 @@ export default function BooleanSearchPage() {
       { name: "critical thinking", description: "Analytical thinking and evaluation skills", priority: 1 },
     ]
 
+    // Add domain-specific skills if job type is detected
+    let allSkills = [...skillsData]
+    if (jobType && domainSkills[jobType]) {
+      const domainSpecificSkills = domainSkills[jobType].map((skill) => ({
+        name: skill.name,
+        description: skill.description,
+        priority: 3, // High priority for domain-specific skills
+      }))
+      allSkills = [...allSkills, ...domainSpecificSkills]
+    }
+
     // Extract highlighted technical skills from the job description
     const techSkillMatches = [
       ...text.matchAll(
@@ -169,6 +313,13 @@ export default function BooleanSearchPage() {
         /\b(certification|certified|certificate|AWS|Azure|GCP|PMP|CISSP|CISM|CISA|ITIL|Scrum|CSM|CSPO|CSD|SAFe|CompTIA|MCSE|CCNA|CCNP|CCIE|CEH|OSCP)\b/gi,
       ),
     ]
+
+    // Extract domain-specific skills if job type is detected
+    let domainMatches = []
+    if (jobType && domainSkills[jobType]) {
+      const domainRegex = new RegExp(`\\b(${domainSkills[jobType].map((skill) => skill.name).join("|")})\\b`, "gi")
+      domainMatches = [...text.matchAll(domainRegex)]
+    }
 
     // Extract years of experience
     const yearsMatches = [...text.matchAll(/\b([0-9]+[+]?)\s*(years?|yrs?)\b|\b([0-9]+[+]?)\s*\+\s*(years?|yrs?)\b/gi)]
@@ -186,8 +337,13 @@ export default function BooleanSearchPage() {
       foundSkillNames.add(match[0].toLowerCase())
     })
 
+    // Add all domain-specific skills
+    domainMatches.forEach((match) => {
+      foundSkillNames.add(match[0].toLowerCase())
+    })
+
     // Filter the skills data to only include found skills
-    const foundSkills = skillsData.filter(
+    const foundSkills = allSkills.filter(
       (skill) =>
         foundSkillNames.has(skill.name.toLowerCase()) ||
         [...foundSkillNames].some(
@@ -198,8 +354,8 @@ export default function BooleanSearchPage() {
     // Sort by priority (higher priority first)
     foundSkills.sort((a, b) => b.priority - a.priority)
 
-    // Limit to top 10 skills
-    return foundSkills.slice(0, 10)
+    // Limit to top 15 skills
+    return foundSkills.slice(0, 15)
   }
 
   const generateBooleanStrings = (skills: { name: string; description: string; priority: number }[]) => {
@@ -405,6 +561,14 @@ export default function BooleanSearchPage() {
                       <div className="w-3 h-3 rounded-full bg-orange-500 mr-1"></div>
                       <span className="text-xs text-slate-700">Background</span>
                     </div>
+                    {jobType && (
+                      <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full bg-pink-500 mr-1"></div>
+                        <span className="text-xs text-slate-700">
+                          {jobType.charAt(0).toUpperCase() + jobType.slice(1)} Skills
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Highlighted Content */}
@@ -419,6 +583,7 @@ export default function BooleanSearchPage() {
                         "--highlight-education-color": "#eab308",
                         "--highlight-technical-color": "#8b5cf6",
                         "--highlight-background-color": "#f97316",
+                        "--highlight-domain-skill-color": "#ec4899",
                       } as React.CSSProperties
                     }
                   />
@@ -498,9 +663,7 @@ export default function BooleanSearchPage() {
                 <Card className="border-t-4 border-t-blue-500 shadow-md">
                   <CardHeader>
                     <CardTitle className="text-xl">Boolean Search Strings</CardTitle>
-                    <CardDescription>
-                      Ready-to-use search strings for Dice, LinkedIn, and other platforms
-                    </CardDescription>
+                    <CardDescription>Ready-to-use search strings for LinkedIn, job boards, or your ATS</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Tabs defaultValue="or" className="w-full">
