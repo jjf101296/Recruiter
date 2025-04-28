@@ -1,42 +1,10 @@
 "use client"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ArrowLeft, StampIcon as Passport, ExternalLink, Linkedin, Calendar, MapPin, Plane } from "lucide-react"
+import { ArrowLeft, StampIcon as Passport, ExternalLink, Linkedin, Calendar, MapPin, Plane, Info } from "lucide-react"
 import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function TravelHistoryPage() {
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [birthDate, setBirthDate] = useState("")
-  const [passportNumber, setPassportNumber] = useState("")
-  const [countryOfIssue, setCountryOfIssue] = useState("")
-  const { toast } = useToast()
-
-  const handleCheckHistory = () => {
-    // Validate form
-    if (!firstName || !lastName || !birthDate || !passportNumber || !countryOfIssue) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Redirect to the official I-94 website
-    window.open("https://i94.cbp.dhs.gov/I94/#/recent-search", "_blank")
-
-    toast({
-      title: "Redirecting",
-      description: "Opening the official I-94 website in a new tab.",
-    })
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
@@ -63,60 +31,18 @@ export default function TravelHistoryPage() {
                   Check Travel History & I-94
                 </CardTitle>
                 <CardDescription>
-                  Enter your passport information to check your travel history and most recent I-94
+                  Access the official I-94 website to check travel history and most recent I-94
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      placeholder="Enter your first name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name/Surname</Label>
-                    <Input
-                      id="lastName"
-                      placeholder="Enter your last name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate">Date of Birth</Label>
-                    <Input
-                      id="birthDate"
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="passportNumber">Document Number (Passport Number)</Label>
-                    <Input
-                      id="passportNumber"
-                      placeholder="Enter your passport number"
-                      value={passportNumber}
-                      onChange={(e) => setPassportNumber(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="countryOfIssue">Country of Issue</Label>
-                    <Input
-                      id="countryOfIssue"
-                      placeholder="Enter country of issue"
-                      value={countryOfIssue}
-                      onChange={(e) => setCountryOfIssue(e.target.value)}
-                    />
-                  </div>
+                <div className="mb-8">
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <AlertTitle>Direct Access to Official I-94 Website</AlertTitle>
+                    <AlertDescription>
+                      Click the button below to access the official U.S. Customs and Border Protection I-94 website.
+                    </AlertDescription>
+                  </Alert>
                 </div>
 
                 <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
@@ -143,24 +69,20 @@ export default function TravelHistoryPage() {
                   </ul>
                 </div>
 
-                <Button
-                  className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  onClick={handleCheckHistory}
-                >
-                  Check Travel History
-                </Button>
-
-                <div className="mt-4 text-center text-sm text-slate-500">
-                  <p>This will redirect you to the official I-94 website</p>
+                <div className="flex justify-center mt-8">
                   <a
                     href="https://i94.cbp.dhs.gov/I94/#/recent-search"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center text-purple-600 hover:text-purple-800 mt-2"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-md font-medium transition-colors"
                   >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    <span>Direct link to I-94 website</span>
+                    <ExternalLink className="h-5 w-5" />
+                    Access I-94 Website
                   </a>
+                </div>
+
+                <div className="mt-4 text-center text-sm text-slate-500">
+                  <p>This will open the official I-94 website in a new tab</p>
                 </div>
               </CardContent>
             </Card>
