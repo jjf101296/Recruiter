@@ -880,7 +880,13 @@ const statesInfo = {
     population: "1.07 million",
     timezone: "Mountain Time (MT)",
     culture: "Outdoor lifestyle, western heritage, independent spirit",
-    topCompanies: ["Glacier Bancorp", "Washington Companies", "Stillwater Mining", "First Interstate BancSystem", "Oracle"],
+    topCompanies: [
+      "Glacier Bancorp",
+      "Washington Companies",
+      "Stillwater Mining",
+      "First Interstate BancSystem",
+      "Oracle",
+    ],
     demographics: "Rural workforce with natural resources and tourism expertise",
     description:
       "Montana's economy includes agriculture, tourism, and natural resource extraction. The state is seeing growth in technology sectors, particularly in Bozeman.",
@@ -930,7 +936,13 @@ const statesInfo = {
     population: "2.10 million",
     timezone: "Mountain Time (MT)",
     culture: "Hispanic and Native American heritage, artistic communities, desert lifestyle",
-    topCompanies: ["Los Alamos National Laboratory", "Sandia National Laboratories", "Presbyterian Healthcare", "Intel", "Public Service Company of New Mexico"],
+    topCompanies: [
+      "Los Alamos National Laboratory",
+      "Sandia National Laboratories",
+      "Presbyterian Healthcare",
+      "Intel",
+      "Public Service Company of New Mexico",
+    ],
     demographics: "Diverse workforce with government and energy expertise",
     description:
       "New Mexico has strengths in energy, research, and aerospace. The state is home to major national laboratories and a growing film industry.",
@@ -1100,7 +1112,13 @@ const statesInfo = {
     population: "1.79 million",
     timezone: "Eastern Time (ET)",
     culture: "Appalachian heritage, coal mining history, outdoor recreation",
-    topCompanies: ["West Virginia United Health System", "Mylan Pharmaceuticals", "Kroger", "Camcare", "Toyota Motor Manufacturing"],
+    topCompanies: [
+      "West Virginia United Health System",
+      "Mylan Pharmaceuticals",
+      "Kroger",
+      "Camcare",
+      "Toyota Motor Manufacturing",
+    ],
     demographics: "Energy and healthcare workforce",
     description:
       "West Virginia has strengths in energy, healthcare, and tourism. The state is working to diversify its economy beyond coal mining.",
@@ -1120,4 +1138,17 @@ const statesInfo = {
     population: "578,759",
     timezone: "Mountain Time (MT)",
     culture: "Western heritage, outdoor lifestyle, energy industry",
-    topCompanies: ["Cloud Peak Energy", \"Wyoming\"];\
+    topCompanies: [
+      "Cloud Peak Energy",
+      "Wyoming Medical Center",
+      "Union Pacific",
+      "University of Wyoming",
+      "Sierra Trading Post",
+    ],
+    demographics: "Energy and tourism workforce",
+    description:
+      "Wyoming's economy is heavily influenced by the energy sector, particularly coal, oil, and natural gas. The state has a low population density and offers outdoor recreation opportunities.",
+  },
+}
+
+export { domainSkills, visaTypes, platformFormats, statesInfo }
