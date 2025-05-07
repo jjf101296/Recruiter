@@ -1,10 +1,11 @@
-import { VisaTypesList } from "@/components/visa-types-list"
+import { EnhancedVisaTypes } from "@/components/enhanced-visa-types"
+import { BackToHome } from "@/components/back-to-home"
 
 export default function VisaTypesPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">US Visa Types</h1>
-      <VisaTypesList />
+    <div className="container mx-auto py-8">
+      <BackToHome />
+      <EnhancedVisaTypes />
     </div>
   )
 }

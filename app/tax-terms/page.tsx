@@ -1,10 +1,11 @@
-import { TaxTerms } from "@/components/tax-terms"
+import { EnhancedTaxTerms } from "@/components/enhanced-tax-terms"
+import { BackToHome } from "@/components/back-to-home"
 
 export default function TaxTermsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Tax Terms</h1>
-      <TaxTerms />
+    <div className="container mx-auto py-8">
+      <BackToHome />
+      <EnhancedTaxTerms />
     </div>
   )
 }
