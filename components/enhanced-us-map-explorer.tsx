@@ -171,95 +171,96 @@ export function EnhancedUSMapExplorer() {
             <TabsTrigger value="map">Map View</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
           </TabsList>
-        </Tabs>
-      </div>
 
-      <TabsContent value="map" className="mt-0">
-        <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100 mb-8">
-          <div className="relative aspect-video bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
-            {/* Placeholder for the actual SVG map */}
-            <div className="absolute inset-0 bg-blue-50 flex items-center justify-center">
-              <p className="text-blue-400">Interactive US Map (SVG would be here)</p>
+          <TabsContent value="map" className="mt-0">
+            <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100 mb-8">
+              <div className="relative aspect-video bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                {/* Placeholder for the actual SVG map */}
+                <div className="absolute inset-0 bg-blue-50 flex items-center justify-center">
+                  <p className="text-blue-400">Interactive US Map (SVG would be here)</p>
+                </div>
+
+                {/* Sample state buttons on the map */}
+                {Object.entries(statePositions).map(([code, position]) => (
+                  <Button
+                    key={code}
+                    variant="outline"
+                    size="sm"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 border-blue-200 hover:bg-blue-50 p-1 h-auto"
+                    style={{
+                      top: position.top,
+                      left: position.left,
+                    }}
+                    onClick={() => handleStateClick(code)}
+                  >
+                    {code}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-sm text-slate-500 mt-4">
+                Click on a state to view detailed information including demographics, industries, and recruiting
+                insights.
+              </p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="list" className="mt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredStates.map(([code, state]) => (
+                <Card
+                  key={code}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleStateClick(code)}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="flex items-center">
+                        <MapPin className="h-4 w-4 text-blue-600 mr-2" />
+                        {state.name}
+                      </CardTitle>
+                      <Badge variant="outline">{code}</Badge>
+                    </div>
+                    <CardDescription>Capital: {state.capital}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 text-slate-400 mr-1" />
+                        <span>{state.timeZone}</span>
+                      </div>
+                      <Badge className={getPartyColor(state.party)}>{state.party}</Badge>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-xs font-medium text-slate-500 mb-1">Major Industries</p>
+                      <div className="flex flex-wrap gap-1">
+                        {state.majorIndustries.slice(0, 3).map((industry, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {industry}
+                          </Badge>
+                        ))}
+                        {state.majorIndustries.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{state.majorIndustries.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
 
-            {/* Sample state buttons on the map */}
-            {Object.entries(statePositions).map(([code, position]) => (
-              <Button
-                key={code}
-                variant="outline"
-                size="sm"
-                className="absolute transform -translate-x-1/2 -translate-y-1/2 border-blue-200 hover:bg-blue-50 p-1 h-auto"
-                style={{
-                  top: position.top,
-                  left: position.left,
-                }}
-                onClick={() => handleStateClick(code)}
-              >
-                {code}
-              </Button>
-            ))}
-          </div>
-          <p className="text-sm text-slate-500 mt-4">
-            Click on a state to view detailed information including demographics, industries, and recruiting insights.
-          </p>
-        </div>
-      </TabsContent>
-
-      <TabsContent value="list" className="mt-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredStates.map(([code, state]) => (
-            <Card
-              key={code}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleStateClick(code)}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="flex items-center">
-                    <MapPin className="h-4 w-4 text-blue-600 mr-2" />
-                    {state.name}
-                  </CardTitle>
-                  <Badge variant="outline">{code}</Badge>
-                </div>
-                <CardDescription>Capital: {state.capital}</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 text-slate-400 mr-1" />
-                    <span>{state.timeZone}</span>
-                  </div>
-                  <Badge className={getPartyColor(state.party)}>{state.party}</Badge>
-                </div>
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-slate-500 mb-1">Major Industries</p>
-                  <div className="flex flex-wrap gap-1">
-                    {state.majorIndustries.slice(0, 3).map((industry, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
-                        {industry}
-                      </Badge>
-                    ))}
-                    {state.majorIndustries.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{state.majorIndustries.length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredStates.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-slate-500">No states match your search criteria.</p>
-            <Button variant="outline" className="mt-2" onClick={() => setSearchTerm("")}>
-              Clear Search
-            </Button>
-          </div>
-        )}
-      </TabsContent>
+            {filteredStates.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-slate-500">No states match your search criteria.</p>
+                <Button variant="outline" className="mt-2" onClick={() => setSearchTerm("")}>
+                  Clear Search
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {/* State Details Dialog */}
       {selectedState && (
