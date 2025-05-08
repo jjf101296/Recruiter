@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock } from "lucide-react"
+import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock, DollarSign } from "lucide-react"
 import { TimeZoneClock } from "./time-zone-clock"
+import { CurrencyConverter } from "./currency-converter"
 
 export default function WelcomePage() {
   const [hoveredTool, setHoveredTool] = useState<string | null>(null)
@@ -67,10 +68,17 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans">
-      {/* Simplified Time Zone Clock Header */}
+      {/* Time Zone Clock Header */}
       <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-3 px-4 shadow-md">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
           <TimeZoneClock />
+          <div className="bg-white rounded-lg shadow-md p-3 border border-slate-200 max-w-xs">
+            <div className="flex items-center mb-2">
+              <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+              <h3 className="text-sm font-semibold text-slate-700">USD to INR Converter</h3>
+            </div>
+            <CurrencyConverter />
+          </div>
         </div>
       </div>
 
@@ -145,9 +153,24 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        {/* Simplified Footer */}
+        {/* Updated Footer with Contact Information */}
         <footer className="text-center py-4 border-t border-slate-200">
-          <p className="text-slate-600">© 2025 Recruiter Support Platform</p>
+          <p className="text-slate-600 mb-2">© 2025 Recruiter Support Platform</p>
+          <p className="text-slate-600">
+            Created by{" "}
+            <a
+              href="https://www.linkedin.com/in/johnfrancis/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              John Francis
+            </a>{" "}
+            | Contact:{" "}
+            <a href="mailto:jjf101296@gmail.com" className="text-blue-600 hover:text-blue-800">
+              jjf101296@gmail.com
+            </a>
+          </p>
         </footer>
       </div>
     </div>
