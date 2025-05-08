@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { DollarSign, RefreshCw, TrendingUp } from "lucide-react"
+import { RefreshCw, TrendingUp } from "lucide-react"
 
 export function CurrencyConverter() {
   const [rate, setRate] = useState<number | null>(null)
@@ -43,10 +43,6 @@ export function CurrencyConverter() {
     }
   }
 
-  const handleRefresh = () => {
-    fetchExchangeRate()
-  }
-
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number.parseFloat(e.target.value)
     if (!isNaN(value) && value >= 0) {
@@ -58,65 +54,39 @@ export function CurrencyConverter() {
 
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold flex items-center">
-          <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-          USD to INR Converter
-        </h2>
-        <button
-          onClick={handleRefresh}
-          className="flex items-center text-sm text-blue-600 hover:text-blue-800"
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          {loading ? (
+            <RefreshCw className="h-3 w-3 mr-1 animate-spin text-blue-500" />
+          ) : (
+            <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+          )}
+          <span className="text-xs text-slate-500">{rate ? `1 USD = ${rate.toFixed(2)} INR` : "Loading..."}</span>
+        </div>
+        <button onClick={fetchExchangeRate} className="text-xs text-blue-600 hover:text-blue-800" disabled={loading}>
           Refresh
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="text-sm text-gray-500 mb-2">Current Exchange Rate</div>
-          {loading && !rate ? (
-            <div className="h-8 animate-pulse bg-gray-200 rounded"></div>
-          ) : (
-            <div className="flex items-center">
-              <span className="text-2xl font-bold">1 USD = {rate?.toFixed(2)} INR</span>
-              <TrendingUp className="h-5 w-5 ml-2 text-green-600" />
-            </div>
-          )}
-          <div className="text-xs text-gray-400 mt-2">
-            {lastUpdated ? `Last updated: ${lastUpdated}` : "Updating..."}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <input
+            type="number"
+            value={amount}
+            onChange={handleAmountChange}
+            className="w-full p-1 text-sm border border-slate-300 rounded"
+            min="0"
+            step="0.01"
+          />
+          <div className="text-xs text-slate-400 mt-1">USD</div>
+        </div>
+        <div className="text-lg font-bold">=</div>
+        <div className="flex-1">
+          <div className="p-1 text-sm bg-slate-50 border border-slate-200 rounded">
+            {(amount * (rate || 0)).toFixed(2)}
           </div>
+          <div className="text-xs text-slate-400 mt-1">INR</div>
         </div>
-
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="text-sm text-gray-500 mb-2">Convert USD to INR</div>
-          <div className="flex items-center">
-            <input
-              type="number"
-              value={amount}
-              onChange={handleAmountChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              min="0"
-              step="0.01"
-            />
-          </div>
-          <div className="text-xs text-gray-400 mt-2">Enter amount in USD</div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div className="text-sm text-gray-500 mb-2">Result</div>
-          {loading && !rate ? (
-            <div className="h-8 animate-pulse bg-gray-200 rounded"></div>
-          ) : (
-            <div className="text-2xl font-bold">{(amount * (rate || 0)).toFixed(2)} INR</div>
-          )}
-          <div className="text-xs text-gray-400 mt-2">Approximate value based on current rate</div>
-        </div>
-      </div>
-
-      <div className="mt-4 text-sm text-gray-500">
-        <p>Note: Exchange rates are for informational purposes only and may vary from actual market rates.</p>
       </div>
     </div>
   )
