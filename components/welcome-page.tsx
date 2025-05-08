@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock, DollarSign } from "lucide-react"
+import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock } from "lucide-react"
 import { TimeZoneClock } from "./time-zone-clock"
-import { CurrencyConverter } from "./currency-converter"
 
 export default function WelcomePage() {
   const [hoveredTool, setHoveredTool] = useState<string | null>(null)
@@ -68,36 +67,25 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans">
-      {/* Time Zone Clock */}
-      <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-4 px-6 shadow-md">
+      {/* Simplified Time Zone Clock Header */}
+      <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-3 px-4 shadow-md">
         <div className="max-w-7xl mx-auto">
           <TimeZoneClock />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header with Currency Converter */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-16 gap-8">
-          <div className="text-center md:text-left">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-              <span className="block">Welcome to</span>
-              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Recruiter Support Platform
-              </span>
-            </h1>
-            <p className="mt-3 text-base text-slate-600 sm:text-lg md:mt-5 md:text-xl max-w-3xl">
-              A comprehensive suite of tools designed to help recruiters find the right candidates faster.
-            </p>
-          </div>
-
-          {/* Currency Converter (Smaller and Better Positioned) */}
-          <div className="bg-white rounded-xl shadow-md p-4 border border-slate-200 max-w-xs w-full mx-auto md:mx-0">
-            <div className="flex items-center mb-2">
-              <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-              <h3 className="text-sm font-semibold text-slate-700">USD to INR Converter</h3>
-            </div>
-            <CurrencyConverter />
-          </div>
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            <span className="block">Welcome to</span>
+            <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Recruiter Support Platform
+            </span>
+          </h1>
+          <p className="mt-3 text-base text-slate-600 sm:text-lg md:mt-5 md:text-xl max-w-3xl mx-auto">
+            A comprehensive suite of tools designed to help recruiters find the right candidates faster.
+          </p>
         </div>
 
         {/* Creator Section */}
@@ -157,9 +145,9 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="text-center py-6 border-t border-slate-200">
-          <p className="text-slate-600">© 2025 Recruiter Support Platform. All rights reserved.</p>
+        {/* Simplified Footer */}
+        <footer className="text-center py-4 border-t border-slate-200">
+          <p className="text-slate-600">© 2025 Recruiter Support Platform</p>
         </footer>
       </div>
     </div>

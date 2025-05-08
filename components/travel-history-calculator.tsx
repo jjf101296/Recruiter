@@ -1,255 +1,123 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarIcon, Plus, Trash2, Download, Calculator } from "lucide-react"
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-
-interface TravelEntry {
-  id: string
-  entryDate: Date
-  exitDate: Date | null
-  status: string
-  daysSpent: number
-}
+import { ExternalLink, FileText, AlertTriangle, CheckCircle } from "lucide-react"
 
 export function TravelHistoryCalculator() {
-  const [activeTab, setActiveTab] = useState("calculator")
-  const [travelEntries, setTravelEntries] = useState<TravelEntry[]>([])
-  const [entryDate, setEntryDate] = useState<Date | undefined>(undefined)
-  const [exitDate, setExitDate] = useState<Date | undefined>(undefined)
-  const [visaStatus, setVisaStatus] = useState("B1/B2")
-  const [showInfoDialog, setShowInfoDialog] = useState(false)
-
-  const addTravelEntry = () => {
-    if (!entryDate) return
-
-    const newEntry: TravelEntry = {
-      id: Date.now().toString(),
-      entryDate: entryDate,
-      exitDate: exitDate || null,
-      status: visaStatus,
-      daysSpent: exitDate ? Math.ceil((exitDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1 : 0,
-    }
-
-    setTravelEntries([...travelEntries, newEntry])
-    setEntryDate(undefined)
-    setExitDate(undefined)
-  }
-
-  const removeTravelEntry = (id: string) => {
-    setTravelEntries(travelEntries.filter((entry) => entry.id !== id))
-  }
-
-  const totalDaysSpent = travelEntries.reduce((total, entry) => total + entry.daysSpent, 0)
-
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="calculator">I94 Calculator</TabsTrigger>
-          <TabsTrigger value="history">Travel History</TabsTrigger>
-          <TabsTrigger value="info">Visa Information</TabsTrigger>
-        </TabsList>
+      <Card className="border-t-4 border-blue-500 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardTitle className="text-2xl font-bold text-blue-800">I-94 Travel History</CardTitle>
+          <CardDescription>
+            Check your travel history and I-94 records using the official U.S. Customs and Border Protection website
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-6">
+            <div className="flex items-start">
+              <AlertTriangle className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+              <p className="text-blue-800 text-sm">
+                The I-94 website provides your most recent arrival/departure information and travel history. This
+                information is important for visa applications, extensions, and immigration purposes.
+              </p>
+            </div>
+          </div>
 
-        <TabsContent value="calculator" className="space-y-4 pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calculator className="h-5 w-5 mr-2 text-purple-500" />
-                Add Travel Entry
-              </CardTitle>
-              <CardDescription>Add your travel entries to calculate days spent in the United States</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Entry Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {entryDate ? format(entryDate, "PPP") : <span>Select entry date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar mode="single" selected={entryDate} onSelect={setEntryDate} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+          <div className="flex justify-center mb-6">
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 rounded-lg shadow-md flex items-center gap-2 text-lg"
+              onClick={() => window.open("https://i94.cbp.dhs.gov/search/recent-search", "_blank")}
+            >
+              <ExternalLink className="h-5 w-5" />
+              Access Official I-94 Website
+            </Button>
+          </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Exit Date</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                          disabled={!entryDate}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {exitDate ? format(exitDate, "PPP") : <span>Select exit date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={exitDate}
-                          onSelect={setExitDate}
-                          disabled={(date) => date < (entryDate || new Date())}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Visa/Status</label>
-                  <select
-                    className="w-full p-2 border rounded-md"
-                    value={visaStatus}
-                    onChange={(e) => setVisaStatus(e.target.value)}
-                  >
-                    <option value="B1/B2">B1/B2 Visitor</option>
-                    <option value="F1">F1 Student</option>
-                    <option value="J1">J1 Exchange Visitor</option>
-                    <option value="H-1B">H-1B Worker</option>
-                    <option value="L-1">L-1 Intracompany Transferee</option>
-                    <option value="O-1">O-1 Extraordinary Ability</option>
-                    <option value="TN">TN NAFTA Professional</option>
-                    <option value="ESTA">ESTA/Visa Waiver</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <Button onClick={addTravelEntry} disabled={!entryDate || !exitDate} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" /> Add Travel Entry
-                </Button>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-3">Information Required</h3>
+              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">Family Name:</span> Your last name as it appears on your passport
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">First (Given) Name:</span> Your first name as it appears on your
+                      passport
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">Birth Date:</span> Your date of birth (MM/DD/YYYY)
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">Passport Number:</span> Your current passport number
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium">Passport Country of Issuance:</span> Country that issued your
+                      passport
+                    </div>
+                  </li>
+                </ul>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Travel Summary</CardTitle>
-              <CardDescription>Overview of your travel history and days spent in the United States</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-md border border-slate-200 text-center">
-                    <p className="text-sm text-slate-500">Total Entries</p>
-                    <p className="text-2xl font-bold">{travelEntries.length}</p>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800 mb-3">What You Can Access</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <FileText className="h-5 w-5 text-blue-500 mr-2" />
+                    <h4 className="font-medium text-slate-800">Most Recent I-94</h4>
                   </div>
-
-                  <div className="bg-slate-50 p-4 rounded-md border border-slate-200 text-center">
-                    <p className="text-sm text-slate-500">Total Days</p>
-                    <p className="text-2xl font-bold">{totalDaysSpent}</p>
-                  </div>
-
-                  <div className="bg-slate-50 p-4 rounded-md border border-slate-200 text-center">
-                    <p className="text-sm text-slate-500">Last 180 Days</p>
-                    <p className="text-2xl font-bold">--</p>
-                  </div>
-
-                  <div className="bg-slate-50 p-4 rounded-md border border-slate-200 text-center">
-                    <p className="text-sm text-slate-500">Last 365 Days</p>
-                    <p className="text-2xl font-bold">--</p>
-                  </div>
+                  <p className="text-sm text-slate-600">
+                    View your most recent I-94 admission record, including your class of admission and "Admit Until"
+                    date.
+                  </p>
                 </div>
-
-                {travelEntries.length > 0 ? (
-                  <div className="border rounded-md overflow-hidden">
-                    <table className="min-w-full divide-y divide-slate-200">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Entry Date
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Exit Date
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Days
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-slate-200">
-                        {travelEntries.map((entry) => (
-                          <tr key={entry.id}>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {format(entry.entryDate, "MMM d, yyyy")}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {entry.exitDate ? format(entry.exitDate, "MMM d, yyyy") : "Present"}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              <Badge variant="outline">{entry.status}</Badge>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">{entry.daysSpent}</td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              <Button variant="ghost" size="sm" onClick={() => removeTravelEntry(entry.id)}>
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <FileText className="h-5 w-5 text-blue-500 mr-2" />
+                    <h4 className="font-medium text-slate-800">Travel History</h4>
                   </div>
-                ) : (
-                  <div className="text-center py-8 border rounded-md bg-slate-50">
-                    <p className="text-slate-500">No travel entries added yet.</p>
-                    <p className="text-slate-400 text-sm mt-1">Add your first entry using the form above.</p>
-                  </div>
-                )}
-
-                {travelEntries.length > 0 && (
-                  <div className="flex justify-end">
-                    <Button variant="outline">
-                      <Download className="h-4 w-4 mr-2" /> Export Data
-                    </Button>
-                  </div>
-                )}
+                  <p className="text-sm text-slate-600">
+                    Access your five-year travel history showing entries and exits from the United States.
+                  </p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="history" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Travel History</CardTitle>
-              <CardDescription>View and manage your complete travel history</CardDescription>
-            </CardHeader>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="info" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Visa Information</CardTitle>
-              <CardDescription>Information about different visa types.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This section will provide information about different visa types and their requirements.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-start">
+                <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-yellow-800 mb-1">Important Notes</h4>
+                  <ul className="space-y-2 text-sm text-yellow-700">
+                    <li>• The I-94 website only shows your travel history for the past five years.</li>
+                    <li>• Land border crossings prior to 2009 may not be included in your travel history.</li>
+                    <li>• You can print your I-94 record for official purposes like visa applications.</li>
+                    <li>• If you find errors in your travel history, contact CBP for correction.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

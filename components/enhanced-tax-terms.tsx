@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Search } from "lucide-react"
+import { Search, DollarSign, CheckCircle, XCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
-// Tax term interface
+// Simplified tax term interface
 interface TaxTerm {
   term: string
   fullName?: string
@@ -15,16 +15,12 @@ interface TaxTerm {
   advantages: string[]
   disadvantages: string[]
   bestFor: string[]
-  category: "employment" | "contractor" | "business" | "tax" | "other"
-  commonQuestions: {
-    question: string
-    answer: string
-  }[]
+  category: "employment" | "contractor" | "business"
 }
 
-// Enhanced tax terms data
-const TAX_TERMS: Record<string, TaxTerm> = {
-  W2: {
+// Simplified tax terms data
+const TAX_TERMS: TaxTerm[] = [
+  {
     term: "W2",
     fullName: "IRS Form W-2",
     description:
@@ -50,25 +46,8 @@ const TAX_TERMS: Record<string, TaxTerm> = {
       "Individuals who don't want to handle tax complexities",
     ],
     category: "employment",
-    commonQuestions: [
-      {
-        question: "Do W2 employees pay their own taxes?",
-        answer:
-          "No, employers withhold federal, state, and local taxes, as well as Social Security and Medicare taxes from each paycheck.",
-      },
-      {
-        question: "Can W2 employees deduct business expenses?",
-        answer:
-          "Generally no. The Tax Cuts and Jobs Act eliminated most unreimbursed employee business expense deductions for tax years 2018-2025.",
-      },
-      {
-        question: "Are W2 employees eligible for overtime?",
-        answer:
-          "Yes, non-exempt W2 employees are entitled to overtime pay (1.5x regular rate) for hours worked beyond 40 per week.",
-      },
-    ],
   },
-  "1099": {
+  {
     term: "1099",
     fullName: "IRS Form 1099-NEC",
     description:
@@ -95,25 +74,8 @@ const TAX_TERMS: Record<string, TaxTerm> = {
       "Specialized consultants",
     ],
     category: "contractor",
-    commonQuestions: [
-      {
-        question: "How do 1099 contractors pay taxes?",
-        answer:
-          "1099 contractors must pay quarterly estimated taxes and are responsible for both the employer and employee portions of Social Security and Medicare taxes (15.3% total).",
-      },
-      {
-        question: "What expenses can 1099 contractors deduct?",
-        answer:
-          "Business expenses including home office, travel, equipment, supplies, insurance, professional services, and a portion of self-employment taxes.",
-      },
-      {
-        question: "Can a 1099 contractor also be a W2 employee?",
-        answer:
-          "Yes, it's possible to be both a W2 employee at one job and a 1099 contractor for other work, but not for the same company in the same role.",
-      },
-    ],
   },
-  C2C: {
+  {
     term: "C2C",
     fullName: "Corp-to-Corp",
     description:
@@ -140,33 +102,14 @@ const TAX_TERMS: Record<string, TaxTerm> = {
       "Workers with significant business expenses",
     ],
     category: "business",
-    commonQuestions: [
-      {
-        question: "What business entity is best for C2C?",
-        answer:
-          "Most C2C contractors operate as an S-Corporation or LLC taxed as an S-Corp to optimize tax benefits while maintaining liability protection.",
-      },
-      {
-        question: "What insurance is needed for C2C?",
-        answer:
-          "Typically general liability insurance, professional liability (E&O), and sometimes cyber liability insurance. Clients may specify minimum coverage amounts.",
-      },
-      {
-        question: "How does C2C taxation work?",
-        answer:
-          "With an S-Corp structure, owners can pay themselves a reasonable salary (subject to employment taxes) and take remaining profits as distributions (not subject to self-employment tax).",
-      },
-    ],
   },
-}
-
-export { TAX_TERMS }
+]
 
 export function EnhancedTaxTerms() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
 
-  const filteredTerms = Object.values(TAX_TERMS).filter((term) => {
+  const filteredTerms = TAX_TERMS.filter((term) => {
     const matchesSearch =
       term.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (term.fullName && term.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -181,15 +124,29 @@ export function EnhancedTaxTerms() {
     { id: "employment", name: "Employment" },
     { id: "contractor", name: "Contractor" },
     { id: "business", name: "Business" },
-    { id: "tax", name: "Tax" },
-    { id: "other", name: "Other" },
   ]
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "employment":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "contractor":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "business":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200"
+    }
+  }
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold">Tax Terms Glossary</CardTitle>
+      <Card className="mb-8 border-t-4 border-t-green-500 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-teal-50">
+          <CardTitle className="text-2xl font-bold text-green-800 flex items-center">
+            <DollarSign className="h-6 w-6 mr-2 text-green-600" />
+            Tax Terms Glossary
+          </CardTitle>
           <CardDescription>Essential tax and employment terms for U.S. recruiters and job seekers</CardDescription>
           <div className="relative mt-4">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -215,11 +172,11 @@ export function EnhancedTaxTerms() {
             <TabsContent value={activeTab} className="mt-0">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredTerms.map((term) => (
-                  <Card key={term.term} className="overflow-hidden">
-                    <CardHeader className="bg-gray-50 dark:bg-gray-800">
+                  <Card key={term.term} className="overflow-hidden border-slate-200 hover:shadow-md transition-shadow">
+                    <CardHeader className={`${getCategoryColor(term.category)} bg-opacity-30`}>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-xl font-bold">{term.term}</CardTitle>
-                        <Badge variant="outline">{term.category}</Badge>
+                        <Badge className={getCategoryColor(term.category)}>{term.category}</Badge>
                       </div>
                       {term.fullName && <CardDescription>{term.fullName}</CardDescription>}
                     </CardHeader>
@@ -227,7 +184,10 @@ export function EnhancedTaxTerms() {
                       <p className="mb-4">{term.description}</p>
 
                       <div className="mb-4">
-                        <h4 className="font-semibold mb-2">Advantages</h4>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-1.5" />
+                          Advantages
+                        </h4>
                         <ul className="list-disc pl-5 space-y-1">
                           {term.advantages.map((advantage, i) => (
                             <li key={i} className="text-sm">
@@ -238,7 +198,10 @@ export function EnhancedTaxTerms() {
                       </div>
 
                       <div className="mb-4">
-                        <h4 className="font-semibold mb-2">Disadvantages</h4>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <XCircle className="h-4 w-4 text-red-500 mr-1.5" />
+                          Disadvantages
+                        </h4>
                         <ul className="list-disc pl-5 space-y-1">
                           {term.disadvantages.map((disadvantage, i) => (
                             <li key={i} className="text-sm">
@@ -270,28 +233,6 @@ export function EnhancedTaxTerms() {
               )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Common Questions</CardTitle>
-          <CardDescription>Frequently asked questions about tax and employment terms</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {Object.values(TAX_TERMS).flatMap((term) =>
-              term.commonQuestions.map((qa, i) => (
-                <div key={`${term.term}-${i}`} className="border-b pb-4 last:border-0">
-                  <h4 className="font-semibold mb-2 flex items-center">
-                    <Badge className="mr-2">{term.term}</Badge>
-                    {qa.question}
-                  </h4>
-                  <p className="text-gray-600 dark:text-gray-300">{qa.answer}</p>
-                </div>
-              )),
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>

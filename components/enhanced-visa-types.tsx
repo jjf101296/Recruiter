@@ -4,347 +4,207 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Search, Filter, ChevronDown, ChevronUp } from "lucide-react"
+import { Search, FileText } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 
-// Visa type interface
+// Simplified visa type interface
 interface VisaType {
   name: string
   code: string
   description: string
-  duration: string
-  maxStay?: string
+  category: string
   eligibility: string[]
-  sponsorship: string
-  renewability: string
-  dependents: string
   workEligibility: string
-  path: string
-  quota?: string
-  premiumProcessing?: string
+  duration: string
+  dependents: string
   notes?: string
-  category: "work" | "student" | "visitor" | "permanent" | "dependent" | "other"
-  riskLevel: "low" | "medium" | "high"
-  timeline: {
-    preparation: string
-    processing: string
-    extension: string
-  }
-  requiredDocuments: string[]
-  advantages: string[]
-  disadvantages: string[]
-  comparisonFactors: {
-    cost: number // 1-10 scale
-    complexity: number // 1-10 scale
-    stability: number // 1-10 scale
-    flexibility: number // 1-10 scale
-    pathToPermanence: number // 1-10 scale
-  }
 }
 
-// Enhanced US visa types with descriptions
-const ENHANCED_VISA_TYPES: Record<string, VisaType> = {
-  USC: {
+// Simplified US visa types with descriptions
+const VISA_TYPES: VisaType[] = [
+  {
     name: "U.S. Citizen",
     code: "USC",
-    description:
-      "A person who was born in the United States or who has been granted citizenship after meeting specific requirements.",
-    duration: "Permanent",
-    eligibility: [
-      "Born in the United States or U.S. territories",
-      "Born to U.S. citizen parents (with certain conditions)",
-      "Naturalized after meeting residency and other requirements",
-    ],
-    sponsorship: "N/A",
-    renewability: "N/A",
-    dependents: "Can sponsor family members for immigration",
-    workEligibility: "Unrestricted work authorization",
-    path: "N/A (already a citizen)",
+    description: "A person who was born in the United States or who has been granted citizenship.",
     category: "permanent",
-    riskLevel: "low",
-    timeline: {
-      preparation: "N/A",
-      processing: "N/A",
-      extension: "N/A",
-    },
-    requiredDocuments: ["Birth certificate", "U.S. passport", "Certificate of naturalization (if applicable)"],
-    advantages: [
-      "Unrestricted right to live and work in the U.S.",
-      "Cannot be deported",
-      "Can vote in elections",
-      "Can run for most public offices",
-      "Can obtain a U.S. passport",
-    ],
-    disadvantages: [
-      "Subject to U.S. tax on worldwide income",
-      "May have limited ability for dual citizenship depending on other country",
-    ],
-    comparisonFactors: {
-      cost: 1,
-      complexity: 1,
-      stability: 10,
-      flexibility: 10,
-      pathToPermanence: 10,
-    },
+    eligibility: ["Born in the US", "Naturalized after meeting requirements"],
+    workEligibility: "Unrestricted",
+    duration: "Permanent",
+    dependents: "Can sponsor family members",
+    notes: "Full rights and privileges of US citizenship",
   },
-  GC: {
+  {
     name: "Green Card (Permanent Resident)",
     code: "GC",
-    description:
-      "Legal permanent residency status that allows individuals to live and work permanently in the United States.",
-    duration: "10-year card (2 years for conditional)",
-    eligibility: [
-      "Family sponsorship",
-      "Employment sponsorship",
-      "Investment (EB-5)",
-      "Refugee or asylum status",
-      "Diversity visa lottery",
-      "Special categories",
-    ],
-    sponsorship: "Family, employer, self-sponsorship (certain categories)",
-    renewability: "Card renewal required, status is permanent",
-    dependents: "Spouse and unmarried children under 21 included in application or can be petitioned",
-    workEligibility: "Unrestricted work authorization",
-    path: "Can apply for U.S. citizenship after 3-5 years",
+    description: "Legal permanent residency status that allows individuals to live and work permanently in the US.",
     category: "permanent",
-    riskLevel: "low",
-    timeline: {
-      preparation: "1-6 months",
-      processing: "10 months - 3+ years (depends on category)",
-      extension: "Card renewal every 10 years (process takes 6-12 months)",
-    },
-    requiredDocuments: [
-      "Form I-485 or consular processing forms",
-      "Birth certificate",
-      "Marriage certificate (if applicable)",
-      "Medical examination",
-      "Police certificates",
-      "Employment verification (if applicable)",
-      "Financial support evidence",
-    ],
-    advantages: [
-      "Permanent right to live and work in the U.S.",
-      "Can change employers freely",
-      "Can sponsor certain family members",
-      "Access to most government benefits after 5 years",
-      "Can travel freely (with certain limitations)",
-    ],
-    disadvantages: [
-      "Cannot vote or run for public office",
-      "Can be deported for certain criminal convictions",
-      "Must maintain residence in the U.S.",
-      "Subject to U.S. tax on worldwide income",
-    ],
-    comparisonFactors: {
-      cost: 7,
-      complexity: 8,
-      stability: 9,
-      flexibility: 9,
-      pathToPermanence: 9,
-    },
+    eligibility: ["Family sponsorship", "Employment sponsorship", "Investment", "Diversity visa"],
+    workEligibility: "Unrestricted",
+    duration: "10-year card (2 years for conditional)",
+    dependents: "Spouse and unmarried children under 21",
+    notes: "Can apply for citizenship after 3-5 years",
   },
-  H1B: {
+  {
+    name: "Employment-Based Green Card (EB-3)",
+    code: "EB-3",
+    description: "Green card category for skilled workers, professionals, and other workers.",
+    category: "permanent",
+    eligibility: ["Bachelor's degree", "2+ years experience", "Labor certification"],
+    workEligibility: "Unrestricted once approved",
+    duration: "Permanent",
+    dependents: "Spouse and unmarried children under 21",
+    notes: "Processing times vary by country of birth",
+  },
+  {
     name: "H-1B Specialty Occupation",
     code: "H1B",
     description:
-      "For professionals in specialized fields requiring theoretical and practical application of highly specialized knowledge.",
-    duration: "3 years, extendable to 6 years total",
-    maxStay: "6 years (exceptions available if in green card process)",
-    eligibility: [
-      "Bachelor's degree or higher (or equivalent)",
-      "Job requires specialized knowledge",
-      "Employer willing to sponsor",
-      "Position must meet prevailing wage requirements",
-    ],
-    sponsorship: "Employer must sponsor and file petition",
-    renewability: "Renewable once for additional 3 years (6 years total)",
-    dependents: "H-4 visa for spouse and unmarried children under 21",
-    workEligibility: "Only for sponsoring employer",
-    path: "Dual intent visa, can pursue permanent residency",
-    quota: "Annual cap of 85,000 (20,000 reserved for US master's degree holders)",
-    premiumProcessing: "Available for expedited adjudication (15 calendar days)",
-    notes: "Subject to lottery if cap is reached",
+      "For professionals in specialized fields requiring theoretical and practical application of knowledge.",
     category: "work",
-    riskLevel: "medium",
-    timeline: {
-      preparation: "1-2 months",
-      processing: "Regular: 4-8 months, Premium: 15 days",
-      extension: "Similar to initial application",
-    },
-    requiredDocuments: [
-      "Form I-129 petition",
-      "Labor Condition Application (LCA)",
-      "Proof of specialized knowledge",
-      "Degree certificates and transcripts",
-      "Resume/CV",
-      "Company documents for employer",
-    ],
-    advantages: [
-      "Path to permanent residency",
-      "Spouse may be eligible for work authorization",
-      "Premium processing available",
-      "Relatively stable visa category",
-      "Recognized by employers",
-    ],
-    disadvantages: [
-      "Lottery system",
-      "Employer-specific",
-      "Processing delays",
-      "Prevailing wage requirements",
-      "Limited duration",
-    ],
-    comparisonFactors: {
-      cost: 8,
-      complexity: 7,
-      stability: 7,
-      flexibility: 5,
-      pathToPermanence: 8,
-    },
+    eligibility: ["Bachelor's degree or higher", "Job requires specialized knowledge"],
+    workEligibility: "Only for sponsoring employer",
+    duration: "3 years, extendable to 6 years total",
+    dependents: "H-4 visa for spouse and children under 21",
+    notes: "Annual cap of 85,000 visas",
   },
-  L1: {
+  {
+    name: "H-4 Dependent",
+    code: "H4",
+    description: "For spouses and children of H-1B visa holders.",
+    category: "dependent",
+    eligibility: ["Spouse or child under 21 of H-1B holder"],
+    workEligibility: "Eligible if H-1B holder has approved I-140",
+    duration: "Same as primary H-1B holder",
+    dependents: "N/A",
+    notes: "H-4 EAD allows work authorization for eligible spouses",
+  },
+  {
+    name: "H-4 EAD (Employment Authorization)",
+    code: "H4EAD",
+    description: "Work authorization for certain H-4 visa holders.",
+    category: "work",
+    eligibility: ["H-4 spouse of H-1B with approved I-140"],
+    workEligibility: "Unrestricted while valid",
+    duration: "Typically 2 years, renewable",
+    dependents: "N/A",
+    notes: "Allows H-4 spouse to work for any employer",
+  },
+  {
+    name: "Green Card EAD",
+    code: "GCEAD",
+    description: "Work authorization while green card application is pending.",
+    category: "work",
+    eligibility: ["Pending adjustment of status (I-485)"],
+    workEligibility: "Unrestricted while valid",
+    duration: "Typically 2 years, renewable",
+    dependents: "N/A",
+    notes: "Allows applicant to work while green card is processing",
+  },
+  {
+    name: "Optional Practical Training",
+    code: "OPT",
+    description: "Work authorization for F-1 students after completing their degree.",
+    category: "student",
+    eligibility: ["F-1 student who completed degree program"],
+    workEligibility: "Work related to field of study",
+    duration: "12 months (24-month extension for STEM)",
+    dependents: "N/A",
+    notes: "STEM extension available for eligible fields",
+  },
+  {
+    name: "Curricular Practical Training",
+    code: "CPT",
+    description: "Work authorization for F-1 students as part of curriculum.",
+    category: "student",
+    eligibility: ["F-1 student enrolled in curriculum-required training"],
+    workEligibility: "Work related to field of study",
+    duration: "While enrolled in program",
+    dependents: "N/A",
+    notes: "Must be integral part of established curriculum",
+  },
+  {
     name: "L-1 Intracompany Transferee",
     code: "L1",
-    description:
-      "For employees of international companies transferring to a US office (L-1A for managers/executives, L-1B for specialized knowledge).",
-    duration: "L-1A: Up to 7 years, L-1B: Up to 5 years",
-    maxStay: "L-1A: 7 years, L-1B: 5 years",
-    eligibility: [
-      "Worked for foreign affiliate for at least 1 year in past 3 years",
-      "Transferring to U.S. branch, parent, subsidiary, or affiliate",
-      "Position as manager/executive (L-1A) or specialized knowledge employee (L-1B)",
-    ],
-    sponsorship: "Employer must have qualifying relationship with foreign entity",
-    renewability: "Increments of 2 years until maximum duration",
-    dependents: "L-2 visa for spouse and unmarried children under 21 (spouses eligible for work authorization)",
-    workEligibility: "Only for sponsoring employer",
-    path: "Dual intent visa, can pursue permanent residency",
-    premiumProcessing: "Available for expedited adjudication",
-    notes: "No annual quota, blanket petitions available for large companies",
+    description: "For employees transferring to a US office of the same company.",
     category: "work",
-    riskLevel: "medium",
-    timeline: {
-      preparation: "1-3 months",
-      processing: "Regular: 3-5 months, Premium: 15 days",
-      extension: "Similar to initial application",
-    },
-    requiredDocuments: [
-      "Form I-129 petition",
-      "Evidence of qualifying relationship between companies",
-      "Proof of employment abroad for one year",
-      "Job descriptions for foreign and U.S. positions",
-    ],
-    advantages: [
-      "Path to permanent residency",
-      "No annual quota",
-      "Blanket petitions available for large companies",
-      "Spouse eligible for work authorization",
-    ],
-    disadvantages: [
-      "Employer-specific",
-      "Qualifying relationship required",
-      "Limited duration",
-      "Specialized knowledge can be difficult to prove (L-1B)",
-    ],
-    comparisonFactors: {
-      cost: 7,
-      complexity: 6,
-      stability: 8,
-      flexibility: 6,
-      pathToPermanence: 7,
-    },
+    eligibility: ["Worked for foreign affiliate for 1+ year in past 3 years"],
+    workEligibility: "Only for sponsoring employer",
+    duration: "L-1A: Up to 7 years, L-1B: Up to 5 years",
+    dependents: "L-2 visa for spouse and children under 21",
+    notes: "L-1A for managers/executives, L-1B for specialized knowledge",
   },
-}
-
-export { ENHANCED_VISA_TYPES }
+  {
+    name: "L-2 Dependent",
+    code: "L2",
+    description: "For spouses and children of L-1 visa holders.",
+    category: "dependent",
+    eligibility: ["Spouse or child under 21 of L-1 holder"],
+    workEligibility: "Spouses eligible for work authorization",
+    duration: "Same as primary L-1 holder",
+    dependents: "N/A",
+    notes: "Spouses can apply for EAD",
+  },
+  {
+    name: "E-3 Australian Professional",
+    code: "E3",
+    description: "For Australian citizens in specialty occupations.",
+    category: "work",
+    eligibility: ["Australian citizen", "Bachelor's degree or higher", "Specialty occupation"],
+    workEligibility: "Only for sponsoring employer",
+    duration: "2 years, renewable indefinitely",
+    dependents: "E-3D for spouse and children under 21",
+    notes: "Annual cap of 10,500 visas",
+  },
+]
 
 export function EnhancedVisaTypes() {
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
-  const [expandedVisa, setExpandedVisa] = useState<string | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
-  const [filters, setFilters] = useState({
-    riskLevel: [] as ("low" | "medium" | "high")[],
-    workEligibility: [] as string[],
-    duration: [] as string[],
-  })
 
-  const toggleExpand = (visaCode: string) => {
-    setExpandedVisa(expandedVisa === visaCode ? null : visaCode)
-  }
-
-  const toggleFilter = (category: keyof typeof filters, value: any) => {
-    setFilters((prev) => {
-      const newFilters = { ...prev }
-      if (newFilters[category].includes(value)) {
-        newFilters[category] = newFilters[category].filter((v) => v !== value)
-      } else {
-        newFilters[category] = [...newFilters[category], value]
-      }
-      return newFilters
-    })
-  }
-
-  const filteredVisas = Object.values(ENHANCED_VISA_TYPES).filter((visa) => {
+  const filteredVisas = VISA_TYPES.filter((visa) => {
     const matchesSearch =
       visa.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visa.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visa.description.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesCategory = activeTab === "all" || visa.category === activeTab
-
-    const matchesFilters =
-      (filters.riskLevel.length === 0 || filters.riskLevel.includes(visa.riskLevel)) &&
-      (filters.workEligibility.length === 0 || filters.workEligibility.includes(visa.workEligibility)) &&
-      (filters.duration.length === 0 || filters.duration.includes(visa.duration))
-
-    return matchesSearch && matchesCategory && matchesFilters
+    if (activeTab === "all") return matchesSearch
+    return matchesSearch && visa.category === activeTab
   })
 
   const categories = [
     { id: "all", name: "All Visas" },
     { id: "work", name: "Work Visas" },
     { id: "student", name: "Student Visas" },
-    { id: "visitor", name: "Visitor Visas" },
     { id: "permanent", name: "Permanent Residency" },
     { id: "dependent", name: "Dependent Visas" },
-    { id: "other", name: "Other Visas" },
   ]
 
-  const getRiskLevelColor = (level: string) => {
-    switch (level) {
-      case "low":
-        return "bg-green-500"
-      case "medium":
-        return "bg-yellow-500"
-      case "high":
-        return "bg-red-500"
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "work":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "student":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "permanent":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "dependent":
+        return "bg-amber-100 text-amber-800 border-amber-200"
       default:
-        return "bg-gray-500"
+        return "bg-slate-100 text-slate-800 border-slate-200"
     }
   }
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="mb-8">
-        <CardHeader>
+      <Card className="mb-8 border-t-4 border-t-blue-500 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className="text-3xl font-bold">U.S. Visa Types</CardTitle>
+              <CardTitle className="text-2xl font-bold text-blue-800">U.S. Visa Types</CardTitle>
               <CardDescription>
                 Comprehensive guide to U.S. visa categories, requirements, and work eligibility
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 self-start md:self-auto"
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
           </div>
 
           <div className="relative mt-4">
@@ -357,81 +217,6 @@ export function EnhancedVisaTypes() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {showFilters && (
-            <div className="mt-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-              <h4 className="font-medium mb-3">Filter by:</h4>
-
-              <div className="space-y-4">
-                <div>
-                  <h5 className="text-sm font-medium mb-2">Risk Level</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {["low", "medium", "high"].map((level) => (
-                      <Badge
-                        key={level}
-                        variant={filters.riskLevel.includes(level as any) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter("riskLevel", level)}
-                      >
-                        <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${getRiskLevelColor(level)}`}></span>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="text-sm font-medium mb-2">Work Eligibility</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(new Set(Object.values(ENHANCED_VISA_TYPES).map((v) => v.workEligibility))).map(
-                      (eligibility) => (
-                        <Badge
-                          key={eligibility}
-                          variant={filters.workEligibility.includes(eligibility) ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => toggleFilter("workEligibility", eligibility)}
-                        >
-                          {eligibility}
-                        </Badge>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="text-sm font-medium mb-2">Duration</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(new Set(Object.values(ENHANCED_VISA_TYPES).map((v) => v.duration))).map((duration) => (
-                      <Badge
-                        key={duration}
-                        variant={filters.duration.includes(duration) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter("duration", duration)}
-                      >
-                        {duration}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setFilters({
-                      riskLevel: [],
-                      workEligibility: [],
-                      duration: [],
-                    })
-                  }
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
@@ -444,230 +229,78 @@ export function EnhancedVisaTypes() {
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-0">
-              <div className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredVisas.map((visa) => (
-                  <Card key={visa.code} className="overflow-hidden">
-                    <CardHeader
-                      className="bg-gray-50 dark:bg-gray-800 cursor-pointer"
-                      onClick={() => toggleExpand(visa.code)}
-                    >
+                  <Card key={visa.code} className="overflow-hidden border-slate-200 hover:shadow-md transition-shadow">
+                    <CardHeader className={`${getCategoryColor(visa.category)} bg-opacity-30 pb-3`}>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Badge className={`${getRiskLevelColor(visa.riskLevel)} text-white`}>{visa.code}</Badge>
-                          <CardTitle className="text-xl font-bold">{visa.name}</CardTitle>
-                        </div>
-                        {expandedVisa === visa.code ? (
-                          <ChevronUp className="h-5 w-5" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5" />
-                        )}
+                        <Badge className={getCategoryColor(visa.category)}>{visa.code}</Badge>
+                        <Badge variant="outline" className={getCategoryColor(visa.category)}>
+                          {visa.category}
+                        </Badge>
                       </div>
+                      <CardTitle className="text-lg mt-2">{visa.name}</CardTitle>
                     </CardHeader>
 
-                    {expandedVisa === visa.code && (
-                      <CardContent className="pt-4">
-                        <p className="mb-4">{visa.description}</p>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-slate-600 mb-4">{visa.description}</p>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          <div>
-                            <h4 className="font-semibold mb-3">Key Details</h4>
-                            <ul className="space-y-2">
-                              <li>
-                                <span className="font-medium">Duration:</span> {visa.duration}
-                              </li>
-                              {visa.maxStay && (
-                                <li>
-                                  <span className="font-medium">Maximum Stay:</span> {visa.maxStay}
-                                </li>
-                              )}
-                              <li>
-                                <span className="font-medium">Sponsorship:</span> {visa.sponsorship}
-                              </li>
-                              <li>
-                                <span className="font-medium">Renewability:</span> {visa.renewability}
-                              </li>
-                              <li>
-                                <span className="font-medium">Dependents:</span> {visa.dependents}
-                              </li>
-                              <li>
-                                <span className="font-medium">Work Eligibility:</span> {visa.workEligibility}
-                              </li>
-                              <li>
-                                <span className="font-medium">Path to Permanent Residency:</span> {visa.path}
-                              </li>
-                              {visa.quota && (
-                                <li>
-                                  <span className="font-medium">Annual Quota:</span> {visa.quota}
-                                </li>
-                              )}
-                              {visa.premiumProcessing && (
-                                <li>
-                                  <span className="font-medium">Premium Processing:</span> {visa.premiumProcessing}
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-semibold mb-3">Timeline</h4>
-                            <ul className="space-y-2">
-                              <li>
-                                <span className="font-medium">Preparation Time:</span> {visa.timeline.preparation}
-                              </li>
-                              <li>
-                                <span className="font-medium">Processing Time:</span> {visa.timeline.processing}
-                              </li>
-                              <li>
-                                <span className="font-medium">Extension Process:</span> {visa.timeline.extension}
-                              </li>
-                            </ul>
-
-                            <h4 className="font-semibold mt-6 mb-3">Risk Assessment</h4>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm">Risk Level:</span>
-                              <Badge className={`${getRiskLevelColor(visa.riskLevel)} text-white`}>
-                                {visa.riskLevel.charAt(0).toUpperCase() + visa.riskLevel.slice(1)}
-                              </Badge>
-                            </div>
-                            {visa.notes && (
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{visa.notes}</p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-6">
-                          <h4 className="font-semibold mb-3">Eligibility Requirements</h4>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {visa.eligibility.map((item, i) => (
-                              <li key={i}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="mb-6">
-                          <h4 className="font-semibold mb-3">Required Documents</h4>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {visa.requiredDocuments.map((doc, i) => (
-                              <li key={i}>{doc}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          <div>
-                            <h4 className="font-semibold mb-3">Advantages</h4>
-                            <ul className="list-disc pl-5 space-y-1">
-                              {visa.advantages.map((advantage, i) => (
-                                <li key={i}>{advantage}</li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-semibold mb-3">Disadvantages</h4>
-                            <ul className="list-disc pl-5 space-y-1">
-                              {visa.disadvantages.map((disadvantage, i) => (
-                                <li key={i}>{disadvantage}</li>
-                              ))}
-                            </ul>
-                          </div>
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                            Work Eligibility
+                          </h4>
+                          <p className="text-sm font-medium">{visa.workEligibility}</p>
                         </div>
 
                         <div>
-                          <h4 className="font-semibold mb-3">Comparison Factors</h4>
-                          <div className="space-y-3">
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm">Cost</span>
-                                <span className="text-sm">{visa.comparisonFactors.cost}/10</span>
-                              </div>
-                              <Progress value={visa.comparisonFactors.cost * 10} className="h-2" />
-                            </div>
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                            Duration
+                          </h4>
+                          <p className="text-sm">{visa.duration}</p>
+                        </div>
 
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm">Complexity</span>
-                                <span className="text-sm">{visa.comparisonFactors.complexity}/10</span>
-                              </div>
-                              <Progress value={visa.comparisonFactors.complexity * 10} className="h-2" />
-                            </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                            Dependents
+                          </h4>
+                          <p className="text-sm">{visa.dependents}</p>
+                        </div>
 
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm">Stability</span>
-                                <span className="text-sm">{visa.comparisonFactors.stability}/10</span>
-                              </div>
-                              <Progress value={visa.comparisonFactors.stability * 10} className="h-2" />
-                            </div>
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                            Eligibility
+                          </h4>
+                          <ul className="list-disc pl-5 space-y-1">
+                            {visa.eligibility.map((item, i) => (
+                              <li key={i} className="text-sm">
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm">Flexibility</span>
-                                <span className="text-sm">{visa.comparisonFactors.flexibility}/10</span>
-                              </div>
-                              <Progress value={visa.comparisonFactors.flexibility * 10} className="h-2" />
-                            </div>
-
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm">Path to Permanence</span>
-                                <span className="text-sm">{visa.comparisonFactors.pathToPermanence}/10</span>
-                              </div>
-                              <Progress value={visa.comparisonFactors.pathToPermanence * 10} className="h-2" />
+                        {visa.notes && (
+                          <div className="bg-slate-50 p-2 rounded border border-slate-200 mt-2">
+                            <div className="flex items-start">
+                              <FileText className="h-4 w-4 text-slate-500 mt-0.5 mr-1.5 flex-shrink-0" />
+                              <p className="text-xs text-slate-600">{visa.notes}</p>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    )}
+                        )}
+                      </div>
+                    </CardContent>
                   </Card>
                 ))}
-
-                {filteredVisas.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No visa types found matching your criteria.</p>
-                  </div>
-                )}
               </div>
+
+              {filteredVisas.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No visa types found matching your criteria.</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Visa Comparison</CardTitle>
-          <CardDescription>Compare different visa types to find the best option for your situation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Visa Type</th>
-                  <th className="text-left p-2">Duration</th>
-                  <th className="text-left p-2">Work Eligibility</th>
-                  <th className="text-left p-2">Risk Level</th>
-                  <th className="text-left p-2">Path to Green Card</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.values(ENHANCED_VISA_TYPES).map((visa) => (
-                  <tr key={visa.code} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="p-2">
-                      <div className="font-medium">{visa.code}</div>
-                      <div className="text-sm text-gray-500">{visa.name}</div>
-                    </td>
-                    <td className="p-2">{visa.duration}</td>
-                    <td className="p-2">{visa.workEligibility}</td>
-                    <td className="p-2">
-                      <Badge className={`${getRiskLevelColor(visa.riskLevel)} text-white`}>{visa.riskLevel}</Badge>
-                    </td>
-                    <td className="p-2">{visa.path}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </CardContent>
       </Card>
     </div>
