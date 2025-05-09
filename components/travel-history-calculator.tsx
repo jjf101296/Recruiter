@@ -9,7 +9,7 @@ export function TravelHistoryCalculator() {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-xl shadow-md text-white mb-6">
-        <h2 className="text-2xl font-bold mb-3">I-94 Travel History</h2>
+        <h2 className="text-2xl font-bold mb-3">I-94 / Travel History Check</h2>
         <p className="text-white text-opacity-90 mb-4">
           Check your travel history and I-94 records using the official U.S. Customs and Border Protection website
         </p>

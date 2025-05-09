@@ -30,8 +30,8 @@ export default function WelcomePage() {
     },
     {
       id: "us-map",
-      name: "US Map Explorer",
-      description: "Explore US states with detailed information for recruiters",
+      name: "US Map",
+      description: "Explore US states organized by time zone for better scheduling",
       icon: <MapPin className="h-8 w-8" />,
       href: "/us-map",
       gradient: "from-purple-500 to-violet-600",
@@ -57,8 +57,8 @@ export default function WelcomePage() {
     },
     {
       id: "travel-history",
-      name: "Travel History Calculator",
-      description: "Calculate visa eligibility based on travel history",
+      name: "I94 / Travel History Check",
+      description: "Check I-94 records and travel history for visa applications",
       icon: <Clock className="h-8 w-8" />,
       href: "/travel-history",
       gradient: "from-cyan-500 to-blue-600",
@@ -69,10 +69,12 @@ export default function WelcomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans">
       {/* Header with Time Zone Clock and Currency Converter */}
-      <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-3 px-4 shadow-md">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
-          <TimeZoneClock />
-          <div className="w-full md:w-auto max-w-[200px]">
+      <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-4 px-4 shadow-md">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="w-full md:w-auto">
+            <TimeZoneClock />
+          </div>
+          <div className="w-full md:w-[280px]">
             <CurrencyConverter />
           </div>
         </div>

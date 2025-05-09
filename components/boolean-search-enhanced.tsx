@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Search, Copy, Info, X, Plus, Check } from "lucide-react"
 
 // Define skill categories with descriptions
 const SKILL_CATEGORIES = {
@@ -786,9 +787,145 @@ const BooleanSearchEnhanced = () => {
   const [showStateList, setShowStateList] = useState(false)
   const [showVisaList, setShowVisaList] = useState(false)
   const [showSkillList, setShowSkillList] = useState(false)
+  const [jobDescription, setJobDescription] = useState("")
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [skillDefinitionOpen, setSkillDefinitionOpen] = useState(false)
+  const [currentSkill, setCurrentSkill] = useState<{ name: string; description: string } | null>(null)
 
   const { toast } = useToast()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (jobDescription) {
+      extractSkillsFromJobDescription(jobDescription)
+    }
+  }, [jobDescription])
+
+  useEffect(() => {
+    updateBooleanQuery()
+  }, [selectedSkills])
+
+  const extractSkillsFromJobDescription = (text: string) => {
+    // This is a simplified extraction - in a real app, you'd use NLP or a more sophisticated algorithm
+    const allSkills: string[] = []
+
+    // Flatten all skills from all categories
+    Object.values(SKILL_CATEGORIES).forEach((category) => {
+      Object.keys(category.skills).forEach((skill) => {
+        allSkills.push(skill.toLowerCase())
+      })
+    })
+
+    // Find skills in the job description
+    const foundSkills: string[] = []
+    allSkills.forEach((skill) => {
+      if (text.toLowerCase().includes(skill.toLowerCase())) {
+        // Find the original casing from the SKILL_CATEGORIES
+        const originalCasing = Object.values(SKILL_CATEGORIES).reduce((result, category) => {
+          const found = Object.keys(category.skills).find((s) => s.toLowerCase() === skill.toLowerCase())
+          return found || result
+        }, skill)
+
+        foundSkills.push(originalCasing)
+      }
+    })
+
+    // Add some related skills based on found skills
+    const relatedSkills = findRelatedSkills(foundSkills)
+
+    // Combine and deduplicate
+    const combined = [...new Set([...foundSkills, ...relatedSkills])]
+
+    setExtractedSkills(combined)
+  }
+
+  const findRelatedSkills = (skills: string[]): string[] => {
+    // This is a simplified relation finder - in a real app, you'd use a more sophisticated algorithm
+    const related: string[] = []
+
+    skills.forEach((skill) => {
+      // Find category of this skill
+      Object.entries(SKILL_CATEGORIES).forEach(([categoryKey, category]) => {
+        if (Object.keys(category.skills).some((s) => s.toLowerCase() === skill.toLowerCase())) {
+          // Add 2-3 random skills from the same category
+          const categorySkills = Object.keys(category.skills).filter((s) => s.toLowerCase() !== skill.toLowerCase())
+
+          // Get 2-3 random skills
+          const randomCount = Math.min(3, categorySkills.length)
+          for (let i = 0; i < randomCount; i++) {
+            const randomIndex = Math.floor(Math.random() * categorySkills.length)
+            related.push(categorySkills[randomIndex])
+            // Remove to avoid duplicates
+            categorySkills.splice(randomIndex, 1)
+          }
+        }
+      })
+    })
+
+    return related
+  }
+
+  const updateBooleanQuery = () => {
+    if (selectedSkills.length === 0) {
+      setBooleanQuery("")
+      return
+    }
+
+    // Group skills by category for better organization
+    const skillsByCategory: Record<string, string[]> = {}
+
+    selectedSkills.forEach((skill) => {
+      // Find which category this skill belongs to
+      Object.entries(SKILL_CATEGORIES).forEach(([categoryKey, category]) => {
+        if (Object.keys(category.skills).includes(skill)) {
+          if (!skillsByCategory[categoryKey]) {
+            skillsByCategory[categoryKey] = []
+          }
+          skillsByCategory[categoryKey].push(skill)
+        }
+      })
+    })
+
+    // Build the query with grouped skills
+    const queryParts: string[] = []
+
+    Object.entries(skillsByCategory).forEach(([category, skills]) => {
+      if (skills.length === 1) {
+        queryParts.push(`"${skills[0]}"`)
+      } else if (skills.length > 1) {
+        const skillsString = skills.map((s) => `"${s}"`).join(" OR ")
+        queryParts.push(`(${skillsString})`)
+      }
+    })
+
+    setBooleanQuery(queryParts.join(" AND "))
+  }
+
+  const toggleSkillSelection = (skill: string) => {
+    setSelectedSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]))
+  }
+
+  const showSkillDefinition = (skill: string) => {
+    // Find the skill definition
+    let foundSkill = null
+    let foundDescription = ""
+
+    Object.values(SKILL_CATEGORIES).forEach((category) => {
+      if (category.skills[skill]) {
+        foundSkill = skill
+        foundDescription = category.skills[skill]
+      }
+    })
+
+    if (foundSkill) {
+      setCurrentSkill({
+        name: foundSkill,
+        description: foundDescription,
+      })
+      setSkillDefinitionOpen(true)
+    }
+  }
 
   const handleCopyClick = () => {
     if (textareaRef.current) {
@@ -946,315 +1083,158 @@ const BooleanSearchEnhanced = () => {
 
   return (
     <div className="container mx-auto p-4">
-      {showWelcomePage && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Welcome to the Boolean Search Enhanced Tool!</CardTitle>
-            <CardDescription>
-              This tool helps you generate boolean search queries for finding candidates with specific skills, visa
-              types, and locations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Get started by exploring the available options below:</p>
-            <div className="grid gap-4 mt-4">
-              <Button variant="outline" onClick={handleWelcomePageClose}>
-                Explore U.S. Map
-              </Button>
-              <Button variant="outline" onClick={handleShowSkillList}>
-                Explore Skills
-              </Button>
-              <Button variant="outline" onClick={handleShowVisaList}>
-                Explore Visa Types
-              </Button>
-              <Button variant="outline" onClick={handleShowStateList}>
-                Explore U.S. States
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showUSMap && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">U.S. Map</CardTitle>
-            <CardDescription>Click on a state to view details.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <img src="/us-map.svg" alt="U.S. Map" className="w-full h-auto" useMap="#usMap" />
-              <map name="usMap">
-                {Object.keys(US_STATES).map((stateCode) => (
-                  <area
-                    key={stateCode}
-                    shape="rect"
-                    coords="0,0,100,100" // Simplified coordinates
-                    alt={US_STATES[stateCode].name}
-                    title={US_STATES[stateCode].name}
-                    onClick={() => handleStateClick(stateCode)}
-                  />
-                ))}
-              </map>
-            </div>
-            <div className="mt-4">
-              <Button onClick={handleShowStateList}>View State List</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showStateDetailsDialog && stateDetails && (
-        <Dialog open={showStateDetailsDialog} onOpenChange={handleCloseStateDetailsDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{stateDetails.name}</DialogTitle>
-              <DialogDescription>State Information</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold">Time Zone:</h3>
-                <p>{stateDetails.timeZone}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Top Companies:</h3>
-                <ul className="list-disc pl-5">
-                  {stateDetails.topCompanies.map((company: string, index: number) => (
-                    <li key={index}>{company}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold">Demographics:</h3>
-                <p>{stateDetails.demographics}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Cultural Insights:</h3>
-                <p>{stateDetails.culturalInsights}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Political:</h3>
-                <p>
-                  Governor: {stateDetails.governor} ({stateDetails.party})
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {showStateList && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">U.S. States</CardTitle>
-            <CardDescription>Click on a state to view details.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(US_STATES).map(([stateCode, stateInfo]) => (
-                <Button
-                  key={stateCode}
-                  variant="outline"
-                  className="justify-start"
-                  onClick={() => handleStateClick(stateCode)}
-                >
-                  {stateCode} - {stateInfo.name}
-                </Button>
-              ))}
-            </div>
-            <div className="mt-4">
-              <Button onClick={handleBackToMap}>Back to Map</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showSkillList && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Skills Categories</CardTitle>
-            <CardDescription>Browse skills by category.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="programming" onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-4">
-                <TabsTrigger value="programming">Programming</TabsTrigger>
-                <TabsTrigger value="frameworks">Frameworks</TabsTrigger>
-                <TabsTrigger value="cloud">Cloud & DevOps</TabsTrigger>
-                <TabsTrigger value="databases">Databases</TabsTrigger>
-              </TabsList>
-              {Object.entries(SKILL_CATEGORIES).map(([category, categoryInfo]) => (
-                <TabsContent key={category} value={category} className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">{categoryInfo.name}</h3>
-                    <p className="text-sm text-gray-500">{categoryInfo.description}</p>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {Object.entries(categoryInfo.skills)
-                      .slice(0, showAllSkills ? undefined : 10)
-                      .map(([skill, description]) => (
-                        <div key={skill} className="border rounded-md p-2">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{skill}</span>
-                            <Button variant="ghost" size="sm" onClick={() => toggleSkill(skill)}>
-                              {expandedSkills.includes(skill) ? "Less" : "More"}
-                            </Button>
-                          </div>
-                          {expandedSkills.includes(skill) && <p className="text-sm mt-2">{description}</p>}
-                        </div>
-                      ))}
-                  </div>
-                  {Object.keys(categoryInfo.skills).length > 10 && (
-                    <Button variant="outline" onClick={() => setShowAllSkills(!showAllSkills)}>
-                      {showAllSkills ? "Show Less" : "Show All"}
-                    </Button>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
-            <div className="mt-4">
-              <Button onClick={() => setShowSkillList(false)}>Back to Welcome</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {showVisaList && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">U.S. Visa Types</CardTitle>
-            <CardDescription>Browse visa types and their details.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Input
-                placeholder="Filter visa types..."
-                onChange={(e) => setVisaTypeFilter(e.target.value ? e.target.value : "all")}
-                className="mb-4"
+      <Card className="w-full mx-auto mb-6">
+        <CardHeader>
+          <CardTitle className="text-2xl">Boolean Search Generator</CardTitle>
+          <CardDescription>
+            Generate boolean search queries for finding candidates with specific skills, visa types, and locations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Job Description</h3>
+              <Textarea
+                placeholder="Paste job description here to extract skills..."
+                className="min-h-[150px]"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(filteredVisaTypes)
-                  .slice(0, showAllVisaTypes ? undefined : 10)
-                  .map(([visaType, visaInfo]) => (
-                    <div key={visaType} className="border rounded-md p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="font-semibold">{visaType}</h3>
-                          <p className="text-sm">{visaInfo.name}</p>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => toggleVisaType(visaType)}>
-                          {expandedVisaTypes.includes(visaType) ? "Less" : "More"}
-                        </Button>
-                      </div>
-                      {expandedVisaTypes.includes(visaType) && (
-                        <div className="mt-2 space-y-2 text-sm">
-                          <p>
-                            <span className="font-medium">Description:</span> {visaInfo.description}
-                          </p>
-                          <p>
-                            <span className="font-medium">Duration:</span> {visaInfo.duration}
-                          </p>
-                          <p>
-                            <span className="font-medium">Sponsorship:</span> {visaInfo.sponsorship}
-                          </p>
-                          <p>
-                            <span className="font-medium">Renewability:</span> {visaInfo.renewability}
-                          </p>
-                          <p>
-                            <span className="font-medium">Dependents:</span> {visaInfo.dependents}
-                          </p>
-                          <p>
-                            <span className="font-medium">Work Eligibility:</span> {visaInfo.workEligibility}
-                          </p>
-                          <p>
-                            <span className="font-medium">Path to Residency:</span> {visaInfo.path}
-                          </p>
-                          {visaInfo.quota && (
-                            <p>
-                              <span className="font-medium">Quota:</span> {visaInfo.quota}
-                            </p>
-                          )}
-                          {visaInfo.notes && (
-                            <p>
-                              <span className="font-medium">Notes:</span> {visaInfo.notes}
-                            </p>
-                          )}
-                        </div>
-                      )}
+            </div>
+
+            {extractedSkills.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Extracted Skills</h3>
+                <p className="text-sm text-slate-500 mb-3">
+                  Click on a skill to add it to your search query. Click the info icon to see the skill definition.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {extractedSkills.map((skill) => (
+                    <div key={skill} className="flex items-center">
+                      <Badge
+                        variant={selectedSkills.includes(skill) ? "default" : "outline"}
+                        className="cursor-pointer flex items-center gap-1"
+                        onClick={() => toggleSkillSelection(skill)}
+                      >
+                        {selectedSkills.includes(skill) ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                        {skill}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 ml-1"
+                        onClick={() => showSkillDefinition(skill)}
+                      >
+                        <Info className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
+                </div>
               </div>
-              {Object.keys(filteredVisaTypes).length > 10 && (
-                <Button variant="outline" onClickk={() => setShowAllVisaTypes(!showAllVisaTypes)}>
-                  {showAllVisaTypes ? "Show Less" : "Show All"}
-                </Button>
-              )}
-            </div>
-            <div className="mt-4">
-              <Button onClick={() => setShowVisaList(false)}>Back to Welcome</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            )}
 
-      {!showWelcomePage && !showUSMap && !showStateList && !showVisaList && !showSkillList && (
-        <Card className="w-[90%] md:w-[75%] lg:w-[60%] mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Boolean Search Generator</CardTitle>
-            <CardDescription>
-              Generate boolean search queries for finding candidates with specific skills, visa types, and locations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+            {selectedSkills.length > 0 && (
               <div>
-                <label htmlFor="booleanQuery" className="block text-sm font-medium mb-1">
-                  Boolean Query
-                </label>
-                <div className="flex space-x-2">
-                  <textarea
-                    id="booleanQuery"
-                    ref={textareaRef}
-                    value={booleanQuery}
-                    onChange={(e) => setBooleanQuery(e.target.value)}
-                    className="flex-1 min-h-[100px] p-2 border rounded-md"
-                    placeholder='Example: ("React" OR "Angular") AND ("Node.js" OR "Express") AND "JavaScript"'
-                  />
-                  <Button onClick={handleCopyClick} className="self-start">
-                    {isCopied ? "Copied!" : "Copy"}
-                  </Button>
+                <h3 className="text-lg font-semibold mb-2">Selected Skills</h3>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {selectedSkills.map((skill) => (
+                    <Badge key={skill} variant="default" className="cursor-pointer">
+                      {skill}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 ml-1"
+                        onClick={() => toggleSkillSelection(skill)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <Button onClick={handleSearch} disabled={isLoading}>
-                  {isLoading ? "Searching..." : "Search"}
-                </Button>
-                <Button variant="outline" onClick={handleExampleDialogOpen}>
-                  View Examples
-                </Button>
-                <Button variant="outline" onClick={() => setShowWelcomePage(true)}>
-                  Back to Welcome
-                </Button>
-              </div>
-              {error && <p className="text-red-500">{error}</p>}
-              {results.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Results</h3>
-                  <div className="space-y-2">
-                    {results.map((result) => (
-                      <div key={result.id} className="border p-2 rounded-md">
-                        <h4 className="font-medium">{result.title}</h4>
-                        <p className="text-sm">{result.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            )}
 
+            <div>
+              <label htmlFor="booleanQuery" className="block text-sm font-medium mb-1">
+                Boolean Query
+              </label>
+              <div className="flex space-x-2">
+                <textarea
+                  id="booleanQuery"
+                  ref={textareaRef}
+                  value={booleanQuery}
+                  onChange={(e) => setBooleanQuery(e.target.value)}
+                  className="flex-1 min-h-[100px] p-2 border rounded-md"
+                  placeholder='Example: ("React" OR "Angular") AND ("Node.js" OR "Express") AND "JavaScript"'
+                />
+                <Button onClick={handleCopyClick} className="self-start">
+                  {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button onClick={handleSearch} disabled={isLoading}>
+                {isLoading ? "Searching..." : <Search className="h-4 w-4 mr-2" />}
+                Search
+              </Button>
+              <Button variant="outline" onClick={handleExampleDialogOpen}>
+                View Examples
+              </Button>
+              <Button variant="outline" onClick={handleSkillCategoriesDialogOpen}>
+                Browse Skills
+              </Button>
+            </div>
+
+            {error && <p className="text-red-500">{error}</p>}
+
+            {results.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Results</h3>
+                <div className="space-y-2">
+                  {results.map((result) => (
+                    <div key={result.id} className="border p-2 rounded-md">
+                      <h4 className="font-medium">{result.title}</h4>
+                      <p className="text-sm">{result.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Skill Definition Dialog */}
+      <Dialog open={skillDefinitionOpen} onOpenChange={setSkillDefinitionOpen}>
+        <DialogContent className="max-w-md">
+          {currentSkill && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{currentSkill.name}</DialogTitle>
+                <DialogDescription>Skill Definition</DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                <p>{currentSkill.description}</p>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  onClick={() => {
+                    if (currentSkill) {
+                      toggleSkillSelection(currentSkill.name)
+                    }
+                    setSkillDefinitionOpen(false)
+                  }}
+                >
+                  {selectedSkills.includes(currentSkill.name) ? "Remove from Query" : "Add to Query"}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Example Dialog */}
       <Dialog open={isExampleDialogOpen} onOpenChange={handleExampleDialogClose}>
         <DialogContent>
           <DialogHeader>
