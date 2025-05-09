@@ -2,11 +2,10 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { RefreshCw, TrendingUp } from "lucide-react"
+import { RefreshCw, DollarSign } from "lucide-react"
 
 export function CurrencyConverter() {
   const [rate, setRate] = useState<number | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(true)
   const [amount, setAmount] = useState<number>(1)
 
@@ -21,10 +20,6 @@ export function CurrencyConverter() {
   const fetchExchangeRate = async () => {
     setLoading(true)
     try {
-      // In a real implementation, you would use an actual API
-      // For demo purposes, we'll simulate an API response with a realistic rate
-      // that fluctuates slightly on each refresh
-
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -34,7 +29,6 @@ export function CurrencyConverter() {
       const simulatedRate = baseRate + variation
 
       setRate(simulatedRate)
-      setLastUpdated(new Date().toLocaleString())
     } catch (error) {
       console.error("Error fetching exchange rate:", error)
     } finally {
@@ -52,39 +46,35 @@ export function CurrencyConverter() {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-2 flex flex-col">
+      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center">
-          {loading ? (
-            <RefreshCw className="h-3 w-3 mr-1 animate-spin text-blue-500" />
-          ) : (
-            <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-          )}
-          <span className="text-xs text-slate-500">{rate ? `1 USD = ${rate.toFixed(2)} INR` : "Loading..."}</span>
+          <DollarSign className="h-3 w-3 text-blue-600 mr-1" />
+          <span className="text-xs font-semibold text-slate-700">USD to INR</span>
         </div>
-        <button onClick={fetchExchangeRate} className="text-xs text-blue-600 hover:text-blue-800" disabled={loading}>
-          Refresh
-        </button>
+        {loading ? (
+          <RefreshCw className="h-3 w-3 animate-spin text-blue-500" />
+        ) : (
+          <span className="text-xs text-green-600 font-medium">{rate ? `1 = ₹${rate.toFixed(2)}` : ""}</span>
+        )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <div className="flex-1">
           <input
             type="number"
             value={amount}
             onChange={handleAmountChange}
-            className="w-full p-1 text-sm border border-slate-300 rounded"
+            className="w-full p-1 text-xs border border-slate-300 rounded"
             min="0"
             step="0.01"
           />
-          <div className="text-xs text-slate-400 mt-1">USD</div>
         </div>
-        <div className="text-lg font-bold">=</div>
+        <div className="text-sm font-bold">=</div>
         <div className="flex-1">
-          <div className="p-1 text-sm bg-slate-50 border border-slate-200 rounded">
-            {(amount * (rate || 0)).toFixed(2)}
+          <div className="p-1 text-xs bg-slate-50 border border-slate-200 rounded font-mono">
+            ₹{(amount * (rate || 0)).toFixed(2)}
           </div>
-          <div className="text-xs text-slate-400 mt-1">INR</div>
         </div>
       </div>
     </div>

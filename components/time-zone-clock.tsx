@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Clock } from "lucide-react"
 
 export function TimeZoneClock() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
@@ -13,12 +14,13 @@ export function TimeZoneClock() {
     return () => clearInterval(timer)
   }, [])
 
+  // Define time zones with correct UTC offsets
   const timeZones = [
-    { name: "EST", offset: -5, isEST: true },
-    { name: "CST", offset: -6, isEST: false },
-    { name: "MST", offset: -7, isEST: false },
-    { name: "PST", offset: -8, isEST: false },
-    { name: "IST", offset: 5.5, isEST: false },
+    { name: "EST", offset: -5, color: "bg-blue-600" },
+    { name: "CST", offset: -6, color: "bg-indigo-600" },
+    { name: "MST", offset: -7, color: "bg-purple-600" },
+    { name: "PST", offset: -8, color: "bg-violet-600" },
+    { name: "IST", offset: 5.5, color: "bg-emerald-600" },
   ]
 
   const formatTimeForZone = (date: Date, offset: number) => {
@@ -35,27 +37,38 @@ export function TimeZoneClock() {
     }
 
     // Format the time
-    return targetDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
+    return {
+      hours: targetDate.getHours(),
+      minutes: targetDate.getMinutes(),
+      seconds: targetDate.getSeconds(),
+      ampm: targetDate.getHours() >= 12 ? "PM" : "AM",
+      formattedTime: targetDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    }
   }
 
   return (
-    <div className="flex flex-wrap justify-center md:justify-between items-center">
+    <div className="flex flex-wrap justify-center items-center gap-2">
       {timeZones.map((zone) => {
-        const timeString = formatTimeForZone(currentTime, zone.offset)
+        const time = formatTimeForZone(currentTime, zone.offset)
+        const hours = time.hours % 12 || 12
+        const minutes = time.minutes.toString().padStart(2, "0")
 
         return (
           <div
             key={zone.name}
-            className={`flex items-center px-4 py-1 rounded-lg mx-1 my-1 ${
-              zone.isEST ? "bg-blue-600" : "bg-slate-700"
-            } shadow-sm transition-all duration-300`}
+            className={`${zone.color} rounded-lg shadow-md px-3 py-2 flex items-center space-x-2 min-w-[110px]`}
           >
-            <span className="text-xs font-bold text-white mr-2">{zone.name}</span>
-            <span className="text-sm font-mono text-white">{timeString}</span>
+            <Clock className="h-4 w-4 text-white opacity-80" />
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white/90">{zone.name}</span>
+              <span className="text-sm font-mono font-bold text-white">
+                {hours}:{minutes} {time.ampm}
+              </span>
+            </div>
           </div>
         )
       })}

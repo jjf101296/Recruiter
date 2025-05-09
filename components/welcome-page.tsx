@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock, DollarSign } from "lucide-react"
+import { Search, FileSearch, MapPin, FileCheck, Calculator, Clock } from "lucide-react"
 import { TimeZoneClock } from "./time-zone-clock"
 import { CurrencyConverter } from "./currency-converter"
 
@@ -68,23 +68,19 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans">
-      {/* Time Zone Clock Header */}
+      {/* Header with Time Zone Clock and Currency Converter */}
       <div className="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white py-3 px-4 shadow-md">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
           <TimeZoneClock />
-          <div className="bg-white rounded-lg shadow-md p-3 border border-slate-200 max-w-xs">
-            <div className="flex items-center mb-2">
-              <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-              <h3 className="text-sm font-semibold text-slate-700">USD to INR Converter</h3>
-            </div>
+          <div className="w-full md:w-auto max-w-[200px]">
             <CurrencyConverter />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
             <span className="block">Welcome to</span>
             <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
@@ -97,7 +93,7 @@ export default function WelcomePage() {
         </div>
 
         {/* Creator Section */}
-        <div className="mb-16 text-center">
+        <div className="mb-12 text-center">
           <p className="text-sm text-slate-600">
             Created by{" "}
             <a
@@ -113,7 +109,7 @@ export default function WelcomePage() {
         </div>
 
         {/* Available Tools */}
-        <div className="mb-16">
+        <div className="mb-12">
           <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">Available Tools</h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tools.map((tool) => (
